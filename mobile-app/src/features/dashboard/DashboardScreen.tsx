@@ -2,21 +2,39 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { AlarmClock, ArrowUpRight, CircleCheck, FileText, FolderOpen, House, Hourglass, Newspaper, NotebookPen } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 import { CadenceMark } from '@/components/CadenceMark';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { featureCards, navItems } from './dashboardData';
 import { colors, radii, spacing } from '@/theme/tokens';
+import { useAlarm, formatAlarmTime } from '@/features/alarm/alarmState';
 
 const icons = { alarm: AlarmClock, hourglass: Hourglass, 'notebook-pen': NotebookPen, newspaper: Newspaper };
 const navIcons = { house: House, alarm: AlarmClock, 'circle-check': CircleCheck, hourglass: Hourglass };
 
 export default function DashboardScreen() {
+  const router = useRouter();
+  const alarm = useAlarm();
   const [activeTab, setActiveTab] = useState('Home');
   const [fontsLoaded] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
   const insets = useSafeAreaInsets();
   if (!fontsLoaded) return null;
+
+  const handleCardPress = (label: string) => {
+    if (label === 'Alarm') {
+      router.push('/alarm');
+    }
+  };
+
+  const handleNavPress = (label: string) => {
+    if (label === 'Alarm') {
+      router.push('/alarm');
+      return;
+    }
+    setActiveTab(label);
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -42,9 +60,11 @@ export default function DashboardScreen() {
         <View style={styles.grid}>
           {featureCards.map((card) => {
             const Icon = icons[card.icon];
-            return <Pressable key={card.label} style={({ pressed }) => [styles.feature, pressed && styles.pressed]}>
+            const displayValue = card.label === 'Alarm' ? formatAlarmTime(alarm.hour, alarm.minute, alarm.period) : card.value;
+            const displayDetail = card.label === 'Alarm' ? (alarm.enabled ? 'Gentle Wake • Enabled' : 'Disabled') : card.detail;
+            return <Pressable key={card.label} onPress={() => handleCardPress(card.label)} style={({ pressed }) => [styles.feature, pressed && styles.pressed]}>
               <View style={styles.featureTop}><View style={[styles.iconBox, { backgroundColor: card.tint }]}><Icon size={19} color={card.accent} strokeWidth={2.2} /></View><Text style={styles.muted}>{card.label}</Text></View>
-              <View><Text style={styles.featureValue}>{card.value}</Text><Text style={styles.featureDetail} numberOfLines={1}><View style={[styles.smallDot, { backgroundColor: card.accent }]} />{card.detail}</Text></View>
+              <View><Text style={styles.featureValue}>{displayValue}</Text><Text style={styles.featureDetail} numberOfLines={1}><View style={[styles.smallDot, { backgroundColor: card.accent }]} />{displayDetail}</Text></View>
             </Pressable>;
           })}
         </View>
@@ -60,9 +80,9 @@ export default function DashboardScreen() {
           <Path d="M0 0H130C148 0 156 8 164 22C173 38 184 46 200 46C216 46 227 38 236 22C244 8 252 0 270 0H400V76H0V0Z" fill={colors.surface} />
           <Path d="M0 0H130C148 0 156 8 164 22C173 38 184 46 200 46C216 46 227 38 236 22C244 8 252 0 270 0H400" stroke={colors.border} strokeWidth={1} fill="none" />
         </Svg>
-        <View style={styles.navGroup}>{navItems.slice(0, 2).map((item) => <NavItem key={item.label} item={item} active={activeTab === item.label} onPress={setActiveTab} />)}</View>
+        <View style={styles.navGroup}>{navItems.slice(0, 2).map((item) => <NavItem key={item.label} item={item} active={activeTab === item.label} onPress={handleNavPress} />)}</View>
         <Pressable accessibilityLabel="Cadence Voice Assistant" style={({ pressed }) => [styles.aiButton, pressed && styles.pressed]}><CadenceMark size={54} /></Pressable>
-        <View style={styles.navGroup}>{navItems.slice(2).map((item) => <NavItem key={item.label} item={item} active={activeTab === item.label} onPress={setActiveTab} />)}</View>
+        <View style={styles.navGroup}>{navItems.slice(2).map((item) => <NavItem key={item.label} item={item} active={activeTab === item.label} onPress={handleNavPress} />)}</View>
       </View>
     </SafeAreaView>
   );

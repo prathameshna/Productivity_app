@@ -1,8 +1,8 @@
 import { PropsWithChildren } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors, radii } from '@/theme/tokens';
 
-type SurfaceCardProps = PropsWithChildren<{ style?: ViewStyle }>;
+type SurfaceCardProps = PropsWithChildren<{ style?: StyleProp<ViewStyle> }>;
 
 export function SurfaceCard({ children, style }: SurfaceCardProps) {
   return <View style={[styles.card, style]}>{children}</View>;

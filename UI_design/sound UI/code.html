@@ -1,0 +1,287 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Sound Settings - Serene Cadence</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN with forms and container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            surface: {
+              DEFAULT: '#FAF9F6',
+              card: '#FFFFFF',
+              muted: '#F4F2EC',
+            },
+            brand: {
+              DEFAULT: '#D97706', /* Warm Amber / Sunset Cadence Accent */
+              hover: '#B45309',
+              light: '#FEF3C7',
+            },
+            content: {
+              primary: '#171715',
+              secondary: '#6F706A',
+              subtle: '#A2A49D',
+            },
+            line: '#E6E4DD',
+          },
+          boxShadow: {
+            'subtle': '0 1px 3px 0 rgba(23, 23, 21, 0.04), 0 1px 2px -1px rgba(23, 23, 21, 0.04)',
+            'float': '0 -4px 16px 0 rgba(23, 23, 21, 0.04)',
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Styles for Form Controls and Sliders -->
+<style data-purpose="custom-controls">
+    /* Custom Volume Slider Range Styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    /* Chrome/Safari track & thumb */
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #E6E4DD;
+      border-radius: 9999px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 2px solid #D97706;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -7px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:active {
+      transform: scale(1.15);
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+    }
+    /* Firefox */
+    input[type=range]::-moz-range-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #E6E4DD;
+      border-radius: 9999px;
+    }
+    input[type=range]::-moz-range-thumb {
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 2px solid #D97706;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+    }
+
+    /* Hide scrollbar for category chip row */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-surface text-content-primary font-sans antialiased min-h-screen flex justify-center selection:bg-brand-light selection:text-brand-hover">
+<!-- Mobile Screen Shell Container (Mobile iOS Frame) -->
+<div class="w-full max-w-md bg-surface min-h-screen flex flex-col justify-between relative shadow-xl border-x border-line">
+<!-- Top Section Container (Header down to List) -->
+<div class="flex-1 flex flex-col pb-44">
+<!-- BEGIN: TopAppBar -->
+<header class="sticky top-0 z-20 bg-surface/95 backdrop-blur-md px-5 pt-12 pb-3.5 flex items-center gap-4 border-b border-line/60" data-purpose="top-app-bar">
+<!-- Back Navigation Button -->
+<button aria-label="Navigate Back" class="w-10 h-10 -ml-1.5 flex items-center justify-center rounded-full text-content-primary hover:bg-surface-muted transition-colors active:scale-95" type="button">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
+<line x1="19" x2="5" y1="12" y2="12"></line>
+<polyline points="12 19 5 12 12 5"></polyline>
+</svg>
+</button>
+<!-- Screen Title -->
+<h1 class="text-[20px] font-semibold text-content-primary tracking-tight">Sound</h1>
+</header>
+<!-- END: TopAppBar -->
+<!-- Main Content Area -->
+<main class="px-5 pt-4 space-y-5 flex-1">
+<!-- BEGIN: EnableSoundCard -->
+<section data-purpose="enable-sound-control">
+<div class="bg-surface-card rounded-2xl p-4 border border-line shadow-subtle flex items-center justify-between">
+<span class="text-[16px] font-medium text-content-primary select-none">Enable Sound</span>
+<!-- Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-12 h-7 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-200 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-brand"></div>
+</label>
+</div>
+</section>
+<!-- END: EnableSoundCard -->
+<!-- BEGIN: SegmentedNavigationTabs -->
+<nav class="pt-1" data-purpose="sound-category-tabs">
+<div class="flex items-center gap-7 border-b border-line/80 px-1">
+<!-- Active Tab: Ringtones -->
+<button aria-selected="true" class="relative pb-2.5 text-[15px] font-semibold text-brand transition-colors focus:outline-none" type="button">
+              Ringtones
+              <!-- Active Underline Indicator -->
+<span class="absolute bottom-0 left-0 right-0 h-[2.5px] bg-brand rounded-full"></span>
+</button>
+<!-- Inactive Tab: My Music -->
+<button aria-selected="false" class="relative pb-2.5 text-[15px] font-medium text-content-secondary hover:text-content-primary transition-colors focus:outline-none" type="button">
+              My Music
+            </button>
+</div>
+</nav>
+<!-- END: SegmentedNavigationTabs -->
+<!-- BEGIN: CategoryFilterChips -->
+<section class="-mx-5 px-5 overflow-x-auto no-scrollbar flex items-center gap-2.5 py-1" data-purpose="mood-filter-chips">
+<!-- Filter Chip: Bright -->
+<button class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-card border border-line text-content-secondary hover:text-content-primary hover:border-content-subtle text-sm font-medium whitespace-nowrap transition-all shadow-sm active:scale-95" type="button">
+<!-- Music Note Icon -->
+<svg class="w-4 h-4 text-content-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M9 18V5l12-2v13"></path>
+<circle cx="6" cy="18" r="3"></circle>
+<circle cx="18" cy="16" r="3"></circle>
+</svg>
+<span class="">Bright</span>
+</button>
+<!-- Filter Chip: Noisy -->
+<button class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-card border border-line text-content-secondary hover:text-content-primary hover:border-content-subtle text-sm font-medium whitespace-nowrap transition-all shadow-sm active:scale-95" type="button">
+<!-- Alarm/Notification Bell Icon -->
+<svg class="w-4 h-4 text-content-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+</svg>
+<span class="">Noisy</span>
+</button>
+<!-- Filter Chip: Energetic (ACTIVE / SELECTED) -->
+<button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-content-primary text-white text-sm font-medium whitespace-nowrap shadow-sm border border-content-primary transition-all active:scale-95" type="button">
+<!-- Flame / Energy Icon -->
+<svg class="w-4 h-4 text-brand-light fill-current" viewBox="0 0 24 24">
+<path d="M12 2c.3 2.1-.7 4.1-1.6 5.8C9.5 9.4 8.7 11 8.7 13c0 2.2 1.5 4 3.3 4s3.3-1.8 3.3-4c0-.7-.2-1.3-.4-1.9C15.6 12 17 13.9 17 16c0 3.3-2.7 6-6 6s-6-2.7-6-6c0-3.6 2.3-6.8 4.4-9.8.9-1.3 1.7-2.6 1.9-4.2h.7z"></path>
+</svg>
+<span class="">Energetic</span>
+</button>
+<!-- Filter Chip: Calm -->
+<button class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-card border border-line text-content-secondary hover:text-content-primary hover:border-content-subtle text-sm font-medium whitespace-nowrap transition-all shadow-sm active:scale-95" type="button">
+<!-- Coffee / Calm Icon -->
+<svg class="w-4 h-4 text-content-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+<path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+<line x1="6" x2="6" y1="1" y2="4"></line>
+<line x1="10" x2="10" y1="1" y2="4"></line>
+<line x1="14" x2="14" y1="1" y2="4"></line>
+</svg>
+<span class="">Calm</span>
+</button>
+</section>
+<!-- END: CategoryFilterChips -->
+<!-- BEGIN: RandomActionCard -->
+<section data-purpose="random-selection-action">
+<button class="w-full bg-surface-card hover:bg-surface-muted border border-line rounded-2xl py-3.5 px-4 flex items-center justify-center gap-2.5 text-content-primary text-[15px] font-semibold shadow-subtle transition active:scale-[0.99]" type="button">
+<!-- Shuffle Icon -->
+<svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
+<polyline points="16 3 21 3 21 8"></polyline>
+<line x1="4" x2="21" y1="20" y2="3"></line>
+<polyline points="21 16 21 21 16 21"></polyline>
+<line x1="15" x2="21" y1="15" y2="21"></line>
+<line x1="4" x2="9" y1="4" y2="9"></line>
+</svg>
+<span class="">Random (Energetic)</span>
+</button>
+</section>
+<!-- END: RandomActionCard -->
+<!-- BEGIN: SoundListContainer -->
+<section data-purpose="sound-selection-list">
+<div class="bg-surface-card rounded-2xl border border-line divide-y divide-line/70 shadow-subtle overflow-hidden">
+<!-- Item 1: Skyblue (Active) -->
+<div class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-amber-50/40 transition cursor-pointer group" role="button" tabindex="0">
+<span class="text-[15px] font-semibold text-brand tracking-tight">Skyblue</span>
+<!-- Checkmark icon -->
+<svg class="w-5 h-5 text-brand flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+<polyline points="20 6 9 17 4 12"></polyline>
+</svg>
+</div>
+<!-- Item 2: 3000 -->
+<div class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-muted transition cursor-pointer" role="button" tabindex="0">
+<span class="text-[15px] font-medium text-content-primary tracking-tight">3000</span>
+</div>
+<!-- Item 3: City Rush -->
+<div class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-muted transition cursor-pointer" role="button" tabindex="0">
+<span class="text-[15px] font-medium text-content-primary tracking-tight">City Rush</span>
+</div>
+<!-- Item 4: Momentum -->
+<div class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-muted transition cursor-pointer" role="button" tabindex="0">
+<span class="text-[15px] font-medium text-content-primary tracking-tight">Momentum</span>
+</div>
+<!-- Item 5: Motion -->
+<div class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-muted transition cursor-pointer" role="button" tabindex="0">
+<span class="text-[15px] font-medium text-content-primary tracking-tight">Motion</span>
+</div>
+<!-- Item 6: Runners -->
+<div class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-muted transition cursor-pointer" role="button" tabindex="0">
+<span class="text-[15px] font-medium text-content-primary tracking-tight">Runners</span>
+</div>
+</div>
+</section>
+<!-- END: SoundListContainer -->
+</main>
+</div>
+<!-- BEGIN: VolumeEscalationControls -->
+<!-- Fixed Bottom Controls Panel with iOS Safe-Area clearance -->
+<footer class="fixed bottom-0 max-w-md w-full bg-surface-card/95 backdrop-blur-md border-t border-line shadow-float px-5 pt-4 pb-8 z-30" data-purpose="volume-escalation-panel">
+<div class="space-y-4">
+<!-- Gradual Volume Switch Row -->
+<div class="flex items-center justify-between">
+<span class="text-[15px] font-medium text-content-primary select-none">
+            Gradually increase volume
+          </span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-12 h-7 rounded-full border border-black transition-colors peer-focus:outline-none peer bg-line peer-checked:bg-[#E66A1F] relative flex items-center p-0.5 after:content-[''] after:block after:w-5 after:h-5 after:bg-white after:rounded-full after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></div>
+</label>
+</div>
+<!-- Volume Slider Control Row -->
+<div class="flex items-center gap-3.5 pt-1">
+<!-- Volume Icon (Speaker) -->
+<div class="text-brand flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
+<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+</svg>
+</div>
+<!-- Slider Track -->
+<div class="relative flex-1 flex items-center">
+<input aria-label="Volume level" class="w-full h-1.5" id="sound-volume-slider" max="100" min="0" type="range" value="20" style="background: linear-gradient(to right, #080808 0%, #080808 20%, #e2e1dc 20%, #e2e1dc 100%); accent-color: #080808;">
+</div>
+</div>
+</div>
+</footer>
+<!-- END: VolumeEscalationControls -->
+</div>
+
+
+
+
+</body></html>

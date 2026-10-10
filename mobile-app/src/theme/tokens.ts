@@ -16,6 +16,8 @@ export const colors = {
   notesTint: '#F8F1D9',
   news: '#786384',
   newsTint: '#F0ECF4',
+  dark: '#080808',
+  sun: '#F59E0B',
 } as const;
 
 export const spacing = {
@@ -28,6 +30,10 @@ export const spacing = {
 } as const;
 
 export const radii = {
+  sm: 6,
+  md: 12,
+  lg: 16,
   card: 20,
   control: 999,
+  pill: 9999,
 } as const;

@@ -1,0 +1,246 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Vibration Settings</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            surface: {
+              warm: '#FAF9F6',
+              card: '#FFFFFF',
+            },
+            serene: {
+              dark: '#171715',
+              muted: '#6F706A',
+              border: '#E6E4DD',
+              subtle: 'rgba(0, 0, 0, 0.05)',
+              accent: '#D97706',
+              accentLight: '#F59E0B',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="base-typography">
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #EDECE8;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+<style data-purpose="range-slider">
+    /* Custom styling for vibration intensity slider */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #E5E5EA;
+      border-radius: 9999px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 22px;
+      width: 22px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18), 0 0 1px rgba(0, 0, 0, 0.2);
+      border: 0.5px solid rgba(0, 0, 0, 0.04);
+      transition: transform 0.1s ease;
+    }
+    input[type=range]:active::-webkit-slider-thumb {
+      transform: scale(1.08);
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-4">
+<!-- BEGIN: Phone Mockup Container -->
+<main class="w-full max-w-[412px] h-[100dvh] max-h-[892px] bg-surface-warm flex flex-col justify-between relative overflow-hidden shadow-2xl sm:rounded-[36px] sm:border-[8px] sm:border-neutral-800 text-serene-dark select-none" data-purpose="mobile-viewport">
+<!-- Top Screen Content Area (Scrollable) -->
+<div class="flex-1 flex flex-col overflow-y-auto no-scrollbar pb-6">
+<!-- BEGIN: TopAppBar -->
+<header class="flex items-center gap-3 px-5 pt-5 pb-3 sticky top-0 bg-surface-warm/90 backdrop-blur-md z-20" data-purpose="app-bar">
+<!-- Back Navigation Button -->
+<button aria-label="Go back" class="p-2 -ml-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors text-serene-dark flex items-center justify-center" type="button">
+<svg class="w-6 h-6 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Screen Title -->
+<h1 class="text-[20px] font-bold tracking-tight text-serene-dark">Vibration</h1>
+</header>
+<!-- END: TopAppBar -->
+<div class="px-5 space-y-4 pt-1">
+<!-- BEGIN: EnableVibrationCard -->
+<section class="bg-white rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-serene-border/60 flex items-center justify-between" data-purpose="enable-vibration-toggle">
+<span class="text-[16px] font-semibold text-serene-dark">Enable vibration</span>
+<!-- Switch Toggle Button -->
+<button aria-checked="true" class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50" data-purpose="toggle-switch" id="vibration-toggle" role="switch" type="button">
+<span class="sr-only">Enable vibration</span>
+<span aria-hidden="true" class="pointer-events-none inline-block h-6 w-6 translate-x-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out" id="toggle-knob">
+</span>
+</button>
+</section>
+<!-- END: EnableVibrationCard -->
+<!-- BEGIN: VibrationPatternList -->
+<section class="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-serene-border/60 overflow-hidden" data-purpose="vibration-patterns-card">
+<!-- Card Section Header -->
+<div class="px-5 pt-4 pb-2 text-[13px] font-medium text-serene-muted tracking-wide">
+            Vibrations
+          </div>
+<!-- Patterns Interactive List -->
+<div aria-label="Vibration Patterns" class="divide-y divide-black/[0.04]" id="pattern-list" role="radiogroup">
+<!-- Pattern: Short -->
+<button aria-checked="false" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors" role="radio" type="button">
+<span class="">Short</span>
+</button>
+<!-- Pattern: Medium -->
+<button aria-checked="false" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors" role="radio" type="button">
+<span class="">Medium</span>
+</button>
+<!-- Pattern: Basic (Selected by default) -->
+<button aria-checked="true" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-semibold text-serene-accent hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors bg-amber-50/40" role="radio" type="button">
+<span class="text-serene-accent font-semibold">Basic</span>
+<svg class="w-5 h-5 text-serene-accent stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Pattern: Heartbeat -->
+<button aria-checked="false" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors" role="radio" type="button">
+<span class="">Heartbeat</span>
+</button>
+<!-- Pattern: Ticktock -->
+<button aria-checked="false" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors" role="radio" type="button">
+<span class="">Ticktock</span>
+</button>
+<!-- Pattern: Waltz -->
+<button aria-checked="false" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors" role="radio" type="button">
+<span class="">Waltz</span>
+</button>
+<!-- Pattern: Zig-Zig-Zig -->
+<button aria-checked="false" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors" role="radio" type="button">
+<span class="">Zig-Zig-Zig</span>
+</button>
+<!-- Pattern: Offbeat -->
+<button aria-checked="false" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors" role="radio" type="button">
+<span class="">Offbeat</span>
+</button>
+<!-- Pattern: Spinning -->
+<button aria-checked="false" class="w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors" role="radio" type="button">
+<span class="">Spinning</span>
+</button>
+</div>
+</section>
+<!-- END: VibrationPatternList -->
+</div>
+</div>
+<!-- BEGIN: BottomVibrationIntensityBar -->
+<footer class="w-full bg-white/95 backdrop-blur-md border-t border-serene-border/60 px-5 pt-3.5 pb-6 flex items-center gap-4 z-20 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]" data-purpose="intensity-slider-bar">
+<!-- Phone Vibration / Haptics Icon -->
+<div aria-hidden="true" class="flex-shrink-0 text-serene-accent">
+<svg class="w-6 h-6 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<!-- Left vibration waves -->
+<path d="M3 8.5l1.5 1.75L3 12l1.5 1.75L3 15.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<!-- Phone frame -->
+<rect height="15" rx="2" stroke-width="1.8" width="9" x="7.5" y="4.5"></rect>
+<!-- Right vibration waves -->
+<path d="M21 8.5l-1.5 1.75L21 12l-1.5 1.75L21 15.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<!-- Vibration Strength Slider Range Input -->
+<div class="flex-1 relative flex items-center">
+<!-- Colored progress track fill -->
+<div class="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-serene-accent rounded-full pointer-events-none" id="slider-progress" style="width: 20%; background-color: rgb(23, 23, 21);"></div>
+<input aria-label="Vibration Intensity" class="relative z-10 w-full" id="intensity-slider" max="100" min="0" type="range" value="20">
+</div>
+</footer>
+<!-- END: BottomVibrationIntensityBar -->
+</main>
+<!-- END: Phone Mockup Container -->
+<!-- BEGIN: Interactive Feedback Scripts -->
+<script data-purpose="toggle-handler">
+    const toggleBtn = document.getElementById('vibration-toggle');
+    const toggleKnob = document.getElementById('toggle-knob');
+    let isToggled = true;
+
+    toggleBtn.addEventListener('click', () => {
+      isToggled = !isToggled;
+      toggleBtn.setAttribute('aria-checked', String(isToggled));
+      if (isToggled) {
+        toggleBtn.classList.replace('bg-neutral-200', 'bg-amber-500');
+        toggleKnob.classList.replace('translate-x-0', 'translate-x-5');
+      } else {
+        toggleBtn.classList.replace('bg-amber-500', 'bg-neutral-200');
+        toggleKnob.classList.replace('translate-x-5', 'translate-x-0');
+      }
+    });
+  </script>
+<script data-purpose="slider-visual-sync">
+    const intensitySlider = document.getElementById('intensity-slider');
+    const sliderProgress = document.getElementById('slider-progress');
+
+    intensitySlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      sliderProgress.style.width = `${val}%`;
+    });
+  </script>
+<script data-purpose="list-selection-handler">
+    const patternList = document.getElementById('pattern-list');
+    const items = patternList.querySelectorAll('button[role="radio"]');
+
+    items.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        // Reset all
+        items.forEach((item) => {
+          item.setAttribute('aria-checked', 'false');
+          item.className = 'w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-medium text-serene-dark hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors';
+          const existingSvg = item.querySelector('svg');
+          if (existingSvg) existingSvg.remove();
+          const span = item.querySelector('span');
+          if (span) span.className = '';
+        });
+
+        // Set clicked as selected
+        btn.setAttribute('aria-checked', 'true');
+        btn.className = 'w-full text-left px-5 py-3.5 flex items-center justify-between text-[15px] font-semibold text-serene-accent hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors bg-amber-50/40';
+        const span = btn.querySelector('span');
+        if (span) span.className = 'text-serene-accent font-semibold';
+
+        // Add checkmark
+        const checkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        checkSvg.setAttribute('class', 'w-5 h-5 text-serene-accent stroke-[2.5]');
+        checkSvg.setAttribute('fill', 'none');
+        checkSvg.setAttribute('viewBox', '0 0 24 24');
+        checkSvg.setAttribute('stroke', 'currentColor');
+        checkSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />';
+        btn.appendChild(checkSvg);
+      });
+    });
+  </script>
+<!-- END: Interactive Feedback Scripts -->
+
+
+</body></html>

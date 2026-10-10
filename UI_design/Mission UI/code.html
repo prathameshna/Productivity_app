@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Mission Settings</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            surface: '#FAF9F6',
+            card: '#FFFFFF',
+            cardBorder: '#E6E4DD',
+            contentPrimary: '#171715',
+            contentSecondary: '#6F706A',
+            brandAccent: '#EA580C',
+            accentBadge: '#FDF1EB',
+          }
+        }
+      }
+    };
+  </script>
+<style data-purpose="custom-styling">
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-surface text-contentPrimary min-h-screen flex justify-center items-start antialiased selection:bg-brandAccent/10 selection:text-brandAccent">
+<!-- BEGIN: MobileContainer -->
+<!-- Constrained mobile iOS container mimicking native safe area and layout -->
+<div class="w-full max-w-md min-h-screen flex flex-col px-5 pt-12 pb-8 sm:px-6">
+<!-- BEGIN: TopNavigation -->
+<!-- Navigation header with back arrow button and title -->
+<header class="flex items-center gap-4 py-3 mb-6" data-purpose="top-navigation-bar">
+<!-- Back button -->
+<button aria-label="Go back" class="p-2 -ml-2 rounded-full text-contentPrimary hover:bg-black/5 active:scale-95 transition-all focus:outline-none" type="button">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M19 12H5M12 19l-7-7 7-7"></path>
+</svg>
+</button>
+<!-- Screen Title -->
+<h1 class="text-2xl font-bold tracking-tight text-contentPrimary">Mission</h1>
+</header>
+<!-- END: TopNavigation -->
+<!-- BEGIN: MainContent -->
+<main class="flex-1 flex flex-col gap-4" data-purpose="missions-list">
+<!-- BEGIN: EnableMissionsCard -->
+<!-- Card with toggle switch to activate/deactivate missions -->
+<section class="bg-card border border-cardBorder rounded-2xl px-5 py-4 shadow-sm flex items-center justify-between" data-purpose="setting-toggle-card">
+<span class="text-base font-semibold text-contentPrimary tracking-tight">Enable missions</span>
+<!-- Accessible iOS-style toggle switch (active state) -->
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input checked="" class="sr-only peer" id="toggle-missions" type="checkbox">
+<div class="w-[52px] h-[30px] bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[22px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all after:shadow-sm peer-checked:bg-amber-400"></div>
+</label>
+</section>
+<!-- END: EnableMissionsCard -->
+<!-- BEGIN: MissionItemCard -->
+<!-- Active mission item displaying memory puzzle type, repetition count and reorder handle -->
+<section class="bg-card border border-cardBorder rounded-2xl p-4 shadow-sm flex items-center gap-3 transition-colors active:bg-stone-50 cursor-pointer" data-purpose="mission-item">
+<!-- Drag / Reorder handle icon (=) -->
+<div aria-hidden="true" class="text-contentSecondary/70 flex items-center justify-center p-1 -ml-1 cursor-grab">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.2" viewBox="0 0 24 24">
+<line x1="4" x2="20" y1="9" y2="9"></line>
+<line x1="4" x2="20" y1="15" y2="15"></line>
+</svg>
+</div>
+<!-- Mission Type Icon: Memory game with 4 rounded square dots -->
+<div aria-hidden="true" class="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+<div class="grid grid-cols-2 gap-1.5 p-1.5">
+<span class="w-2.5 h-2.5 rounded-full border-2 border-white bg-transparent"></span>
+<span class="w-2.5 h-2.5 rounded-full border-2 border-white bg-transparent"></span>
+<span class="w-2.5 h-2.5 rounded-full border-2 border-white bg-transparent"></span>
+<span class="w-2.5 h-2.5 rounded-full border-2 border-white bg-transparent"></span>
+</div>
+</div>
+<!-- Mission Details -->
+<div class="flex-1 min-w-0">
+<h2 class="text-base font-semibold text-contentPrimary leading-tight">Memory</h2>
+<p class="text-sm font-medium text-contentSecondary mt-0.5">5 times</p>
+</div>
+<!-- Navigation Chevron -->
+<div aria-hidden="true" class="text-contentSecondary/60 pr-1">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</div>
+</section>
+<!-- END: MissionItemCard -->
+<!-- BEGIN: AddMissionCard -->
+<!-- Dashed border button with lock indicator to add or unlock additional missions -->
+<button class="w-full border-2 border-dashed border-stone-300 hover:border-stone-400 bg-white/40 active:bg-stone-100 rounded-2xl py-4 px-5 flex items-center justify-center gap-2 text-contentSecondary transition-all focus:outline-none" data-purpose="add-mission-button" type="button">
+<!-- Lock Icon -->
+
+<!-- Label -->
+<span class="text-base font-medium">Add Mission</span>
+</button>
+<!-- END: AddMissionCard -->
+</main>
+<!-- END: MainContent -->
+</div>
+<!-- END: MobileContainer -->
+
+
+</body></html>
