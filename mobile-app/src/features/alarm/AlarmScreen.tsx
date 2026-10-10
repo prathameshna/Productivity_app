@@ -54,9 +54,8 @@ export default function AlarmScreen() {
   const [repeatDays, setRepeatDays] = useState<number[]>(initial.repeatDays);
   const [name, setName] = useState(initial.name);
   const [mission, setMission] = useState(initial.mission);
-  // sound and vibration are read from the reactive store so the badge updates when their screens write to it
-  const { sound, vibration } = useAlarm();
-  const [snooze, setSnooze] = useState(initial.snooze);
+  // sound, vibration and snooze are read from the reactive store so the badge updates when their screens write to it
+  const { sound, vibration, snooze } = useAlarm();
   const [wakeUpCheck, setWakeUpCheck] = useState(initial.wakeUpCheck);
   const [showMemo, setShowMemo] = useState(initial.showMemo);
   const [memo, setMemo] = useState(initial.memo);
@@ -348,7 +347,7 @@ export default function AlarmScreen() {
                   {/* Calendar icon */}
                   <Pressable
                     accessibilityLabel="Open Calendar"
-                    onPress={toggleAllDays}
+                    onPress={() => router.push('/calendar')}
                     style={({ pressed }) => [
                       styles.iconButton,
                       pressed && styles.pressed,
@@ -506,19 +505,7 @@ export default function AlarmScreen() {
 
               {/* Snooze row */}
               <Pressable
-                onPress={() =>
-                  setActivePicker({
-                    title: 'Select Snooze',
-                    options: [
-                      '5 minutes, forever',
-                      '5 minutes, 3 times',
-                      '10 minutes, 3 times',
-                      'Off',
-                    ],
-                    current: snooze,
-                    onSelect: setSnooze,
-                  })
-                }
+                onPress={() => router.push('/snooze')}
                 style={({ pressed }) => [
                   styles.settingsRow,
                   pressed && styles.pressedRow,

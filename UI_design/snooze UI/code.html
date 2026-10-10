@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Snooze Settings</title>
+<!-- Tailwind CSS v3 CDN with forms and container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Plus Jakarta Sans Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            appBg: '#FAF9F6',
+            cardBg: '#FFFFFF',
+            cardBorder: '#EDEBE6',
+            itemBorder: '#F2F0EB',
+            textPrimary: '#171715',
+            textMuted: '#7D7E78',
+            accent: '#E58A13',
+            accentHover: '#D47E10',
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          borderRadius: {
+            '2xl': '20px',
+            '3xl': '24px',
+          }
+        }
+      }
+    };
+  </script>
+<style data-purpose="base-styling">
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #FAF9F6;
+      color: #171715;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-appBg flex justify-center selection:bg-amber-100 selection:text-amber-900">
+<!-- BEGIN: MainContainer -->
+<!-- Container sized for mobile viewport styling similar to modern iOS devices -->
+<main class="w-full max-w-md min-h-screen px-5 pt-4 pb-12 flex flex-col gap-4">
+<!-- BEGIN: TopAppBar -->
+<header class="flex items-center gap-4 pt-2 pb-2" data-purpose="screen-header">
+<!-- Back Arrow Button -->
+<button aria-label="Go back" class="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-textPrimary hover:bg-stone-200/60 transition-colors focus:outline-none" type="button">
+<svg class="w-6 h-6 stroke-[2.25]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M19 12H5m0 0l7 7m-7-7l7-7"></path>
+</svg>
+</button>
+<h1 class="text-2xl font-bold tracking-tight text-textPrimary">Snooze</h1>
+</header>
+<!-- END: TopAppBar -->
+<!-- BEGIN: MasterToggleCard -->
+<!-- Card enabling/disabling the Snooze functionality -->
+<section class="bg-cardBg rounded-2xl border border-cardBorder shadow-[0_1px_3px_rgba(0,0,0,0.02)] px-5 py-4 flex items-center justify-between" data-purpose="master-toggle-card">
+<span class="text-[17px] font-semibold text-textPrimary tracking-tight">Enable snooze</span>
+<!-- Switch Toggle -->
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input aria-label="Toggle snooze" checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-13 h-7 w-[52px] h-[30px] bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[22px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all after:shadow-sm peer-checked:bg-accent"></div>
+</label>
+</section>
+<!-- END: MasterToggleCard -->
+<!-- BEGIN: IntervalSectionCard -->
+<!-- Card containing the selection options for snooze interval duration -->
+<section class="bg-cardBg rounded-2xl border border-cardBorder shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden" data-purpose="interval-picker-card">
+<!-- Section Header -->
+<div class="pt-4 pb-2 px-5">
+<h2 class="text-[13px] font-medium tracking-wide text-textMuted uppercase">Interval</h2>
+</div>
+<!-- Options List -->
+<ul class="flex flex-col divide-y divide-itemBorder text-[16px]">
+<!-- 1 minute -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between hover:bg-stone-50/70 transition-colors" type="button">
+<span class="font-normal text-textPrimary">1 minute</span>
+</button>
+</li>
+<!-- 3 minutes -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between hover:bg-stone-50/70 transition-colors" type="button">
+<span class="font-normal text-textPrimary">3 minutes</span>
+</button>
+</li>
+<!-- 5 minutes (Active Selection) -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between bg-amber-50/20 hover:bg-amber-50/40 transition-colors" type="button">
+<span class="font-medium text-accent">5 minutes</span>
+<!-- Checkmark Icon -->
+<svg class="w-5 h-5 text-accent stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<path d="M20 6L9 17l-5-5"></path>
+</svg>
+</button>
+</li>
+<!-- 10 minutes -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between hover:bg-stone-50/70 transition-colors" type="button">
+<span class="font-normal text-textPrimary">10 minutes</span>
+</button>
+</li>
+<!-- 30 minutes -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between hover:bg-stone-50/70 transition-colors" type="button">
+<span class="font-normal text-textPrimary">30 minutes</span>
+</button>
+</li>
+</ul>
+</section>
+<!-- END: IntervalSectionCard -->
+<!-- BEGIN: RepeatSectionCard -->
+<!-- Card containing the selection options for snooze repetition count -->
+<section class="bg-cardBg rounded-2xl border border-cardBorder shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden" data-purpose="repeat-count-card">
+<!-- Section Header -->
+<div class="pt-4 pb-2 px-5">
+<h2 class="text-[13px] font-medium tracking-wide text-textMuted uppercase">Repeat</h2>
+</div>
+<!-- Options List -->
+<ul class="flex flex-col divide-y divide-itemBorder text-[16px]">
+<!-- Forever (Active Selection) -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between bg-amber-50/20 hover:bg-amber-50/40 transition-colors" type="button">
+<span class="font-medium text-accent">Forever</span>
+<!-- Checkmark Icon -->
+<svg class="w-5 h-5 text-accent stroke-[2.5]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+<path d="M20 6L9 17l-5-5"></path>
+</svg>
+</button>
+</li>
+<!-- 1 time -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between hover:bg-stone-50/70 transition-colors" type="button">
+<span class="font-normal text-textPrimary">1 time</span>
+</button>
+</li>
+<!-- 3 times -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between hover:bg-stone-50/70 transition-colors" type="button">
+<span class="font-normal text-textPrimary">3 times</span>
+</button>
+</li>
+<!-- 5 times -->
+<li>
+<button class="w-full text-left px-5 py-3.5 flex items-center justify-between hover:bg-stone-50/70 transition-colors" type="button">
+<span class="font-normal text-textPrimary">5 times</span>
+</button>
+</li>
+</ul>
+</section>
+<!-- END: RepeatSectionCard -->
+</main>
+<!-- END: MainContainer -->
+</body></html>

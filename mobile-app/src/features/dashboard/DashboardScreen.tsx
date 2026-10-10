@@ -44,7 +44,7 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>evening, Prathamesh</Text>
             <Text style={styles.date}>Wednesday, Oct 24</Text>
           </View>
-          <Pressable accessibilityLabel="Open User Profile" style={({ pressed }) => [styles.profile, pressed && styles.pressed]}>
+          <Pressable onPress={() => router.push('/profile')} accessibilityLabel="Open User Profile" style={({ pressed }) => [styles.profile, pressed && styles.pressed]}>
             <CadenceMark size={42} />
           </Pressable>
         </View>
