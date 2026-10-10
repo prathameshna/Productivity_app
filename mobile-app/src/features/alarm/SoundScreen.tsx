@@ -276,7 +276,7 @@ export default function SoundScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      {/* ── Header ─────────────────────────────────────────────── */}
+      {/* Header */}
       <View style={s.header}>
         <Pressable
           accessibilityLabel="Go back"
@@ -288,7 +288,7 @@ export default function SoundScreen() {
         <Text style={s.headerTitle}>Sound</Text>
       </View>
 
-      {/* ── Scrollable Body ────────────────────────────────────── */}
+      {/* Scrollable Body */}
       <ScrollView
         contentContainerStyle={[
           s.body,
@@ -402,7 +402,7 @@ export default function SoundScreen() {
         </View>
       </ScrollView>
 
-      {/* ── Bottom Volume Panel ────────────────────────────────── */}
+      {/* Bottom Volume Panel */}
       <View style={[s.bottomPanel, { paddingBottom: Math.max(insets.bottom, 8) + 8 }]}>
         {/* Gradually increase volume row */}
         <View style={s.gradualRow}>

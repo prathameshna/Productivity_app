@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 export interface AlarmData {
+  id: string;
   hour: number;
   minute: number;
   period: 'am' | 'pm';
@@ -16,12 +17,13 @@ export interface AlarmData {
   enabled: boolean;
 }
 
-const defaultAlarm: AlarmData = {
+export const defaultAlarmTemplate: AlarmData = {
+  id: 'alarm-default',
   hour: 6,
   minute: 5,
   period: 'am',
-  repeatDays: [],
-  name: '',
+  repeatDays: [0, 1, 2, 3, 4, 5, 6],
+  name: 'Every day',
   mission: 'Memory',
   sound: 'Skyblue',
   vibration: 'Basic',
@@ -29,20 +31,148 @@ const defaultAlarm: AlarmData = {
   wakeUpCheck: false,
   showMemo: true,
   memo: '',
-  enabled: true,
+  enabled: false,
 };
 
-let currentAlarm: AlarmData = { ...defaultAlarm };
+const initialAlarms: AlarmData[] = [
+  {
+    id: 'alarm-1',
+    hour: 6,
+    minute: 5,
+    period: 'am',
+    repeatDays: [0, 1, 2, 3, 4, 5, 6],
+    name: 'Every day',
+    mission: 'Memory',
+    sound: 'Skyblue',
+    vibration: 'Basic',
+    snooze: '5 minutes, forever',
+    wakeUpCheck: false,
+    showMemo: true,
+    memo: '',
+    enabled: false,
+  },
+  {
+    id: 'alarm-2',
+    hour: 6,
+    minute: 23,
+    period: 'am',
+    repeatDays: [],
+    name: 'Tomorrow',
+    mission: 'Memory',
+    sound: 'Skyblue',
+    vibration: 'Basic',
+    snooze: '5 minutes, forever',
+    wakeUpCheck: false,
+    showMemo: true,
+    memo: '',
+    enabled: false,
+  },
+];
+
+let alarms: AlarmData[] = [...initialAlarms];
+let activeEditingAlarmId: string | null = initialAlarms[0].id;
+let activeEditingAlarm: AlarmData = { ...initialAlarms[0] };
+
 const listeners = new Set<() => void>();
 
+function notify() {
+  listeners.forEach((listener) => listener());
+}
+
+export function getAlarms(): AlarmData[] {
+  return alarms;
+}
+
 export function getAlarm(): AlarmData {
-  return currentAlarm;
+  return activeEditingAlarm;
+}
+
+export function getActiveEditingAlarmId(): string | null {
+  return activeEditingAlarmId;
+}
+
+export function setEditingAlarm(id?: string) {
+  if (id) {
+    const existing = alarms.find((a) => a.id === id);
+    if (existing) {
+      activeEditingAlarmId = id;
+      activeEditingAlarm = { ...existing };
+      notify();
+      return;
+    }
+  }
+  // Creation mode for new alarm
+  const newId = `alarm-${Date.now()}`;
+  activeEditingAlarmId = newId;
+  activeEditingAlarm = {
+    ...defaultAlarmTemplate,
+    id: newId,
+  };
+  notify();
 }
 
 export function updateAlarm(patch: Partial<AlarmData>): AlarmData {
-  currentAlarm = { ...currentAlarm, ...patch };
-  listeners.forEach((listener) => listener());
-  return currentAlarm;
+  activeEditingAlarm = { ...activeEditingAlarm, ...patch };
+  if (activeEditingAlarmId) {
+    const index = alarms.findIndex((a) => a.id === activeEditingAlarmId);
+    if (index !== -1) {
+      alarms[index] = { ...activeEditingAlarm };
+    }
+  }
+  notify();
+  return activeEditingAlarm;
+}
+
+export function saveCurrentAlarm(patch?: Partial<AlarmData>) {
+  if (patch) {
+    activeEditingAlarm = { ...activeEditingAlarm, ...patch };
+  }
+  if (!activeEditingAlarmId) {
+    activeEditingAlarmId = activeEditingAlarm.id || `alarm-${Date.now()}`;
+    activeEditingAlarm.id = activeEditingAlarmId;
+  }
+  const index = alarms.findIndex((a) => a.id === activeEditingAlarmId);
+  if (index !== -1) {
+    alarms[index] = { ...activeEditingAlarm };
+  } else {
+    alarms.push({ ...activeEditingAlarm });
+  }
+  notify();
+}
+
+export function deleteCurrentAlarm() {
+  if (activeEditingAlarmId) {
+    alarms = alarms.filter((a) => a.id !== activeEditingAlarmId);
+    if (alarms.length > 0) {
+      activeEditingAlarmId = alarms[0].id;
+      activeEditingAlarm = { ...alarms[0] };
+    } else {
+      activeEditingAlarmId = null;
+      activeEditingAlarm = { ...defaultAlarmTemplate };
+    }
+    notify();
+  }
+}
+
+export function toggleAlarmEnabled(id: string) {
+  alarms = alarms.map((a) => {
+    if (a.id === id) {
+      return { ...a, enabled: !a.enabled };
+    }
+    return a;
+  });
+  if (activeEditingAlarmId && activeEditingAlarm.id === id) {
+    activeEditingAlarm.enabled = !activeEditingAlarm.enabled;
+  }
+  notify();
+}
+
+export function disableAllAlarms() {
+  alarms = alarms.map((a) => ({ ...a, enabled: false }));
+  if (activeEditingAlarm) {
+    activeEditingAlarm.enabled = false;
+  }
+  notify();
 }
 
 export function subscribeAlarm(listener: () => void): () => void {
@@ -56,6 +186,10 @@ export function useAlarm(): AlarmData {
   return useSyncExternalStore(subscribeAlarm, getAlarm, getAlarm);
 }
 
+export function useAlarms(): AlarmData[] {
+  return useSyncExternalStore(subscribeAlarm, getAlarms, getAlarms);
+}
+
 export function formatAlarmTime(hour: number, minute: number, period: 'am' | 'pm'): string {
   const paddedH = hour.toString().padStart(2, '0');
   const paddedM = minute.toString().padStart(2, '0');
@@ -66,7 +200,7 @@ export const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
 export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
 export function formatRepeatDays(days: number[]): string {
-  if (days.length === 0) return 'None';
+  if (days.length === 0) return 'Tomorrow';
   if (days.length === 7) return 'Every day';
   const sorted = [...days].sort((a, b) => a - b);
   const isWeekdays = sorted.length === 5 && sorted.every((d, i) => d === i + 1);

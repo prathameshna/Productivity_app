@@ -1,1 +1,1 @@
-export { default } from '@/features/alarm/AlarmScreen';
+export { default } from '@/features/alarm/AlarmMainScreen';

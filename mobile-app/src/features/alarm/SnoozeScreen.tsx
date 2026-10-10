@@ -85,7 +85,7 @@ export default function SnoozeScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      {/* ── Header ─────────────────────────────────────────────── */}
+      {/* Header */}
       <View style={s.header}>
         <Pressable
           onPress={() => router.back()}
@@ -95,10 +95,10 @@ export default function SnoozeScreen() {
           <ChevronLeft size={24} color={colors.ink} strokeWidth={2.2} />
         </Pressable>
         <Text style={s.headerTitle}>Snooze</Text>
-        <View style={{ width: 40 }} /> {/* balance */}
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* ── Scrollable Content ─────────────────────────────────── */}
+      {/* Scrollable Content */}
       <ScrollView
         style={s.scrollArea}
         contentContainerStyle={[

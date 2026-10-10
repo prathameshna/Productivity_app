@@ -42,7 +42,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      {/* ── Top Bar ────────────────────────────────────────────── */}
+      {/* Top Bar */}
       <View style={s.header}>
         <Pressable
           onPress={() => router.back()}
@@ -51,10 +51,10 @@ export default function ProfileScreen() {
         >
           <ChevronLeft size={24} color={colors.ink} strokeWidth={2.2} />
         </Pressable>
-        <View style={{ width: 24, height: 24 }} /> {/* Spacer */}
+        <View style={{ width: 24, height: 24 }} />
       </View>
 
-      {/* ── Main Content ───────────────────────────────────────── */}
+      {/* Main Content */}
       <ScrollView
         style={s.scrollArea}
         contentContainerStyle={[

@@ -169,7 +169,7 @@ export default function VibrationScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      {/* ── Header ─────────────────────────────────────────────── */}
+      {/* Header */}
       <View style={s.header}>
         <Pressable
           onPress={() => router.back()}
@@ -179,10 +179,10 @@ export default function VibrationScreen() {
           <ChevronLeft size={24} color={colors.ink} strokeWidth={2.2} />
         </Pressable>
         <Text style={s.headerTitle}>Vibration</Text>
-        <View style={{ width: 40 }} /> {/* balance */}
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* ── Scrollable Content ─────────────────────────────────── */}
+      {/* Scrollable Content */}
       <ScrollView
         style={s.scrollArea}
         contentContainerStyle={[
@@ -253,7 +253,7 @@ export default function VibrationScreen() {
         </View>
       </ScrollView>
 
-      {/* ── Bottom Intensity Bar ───────────────────────────────── */}
+      {/* Bottom Intensity Bar */}
       <View style={[s.bottomBar, { paddingBottom: Math.max(insets.bottom, 24) }]}>
         <View style={s.bottomBarInner}>
           <PhoneVibrateIcon color={BRAND} />
