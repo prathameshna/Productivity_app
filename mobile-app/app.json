@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Productivity",
+    "slug": "productivity",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "productivity",
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "com.productivity.app"
+    },
+    "ios": {
+      "bundleIdentifier": "com.productivity.app"
+    }
+  }
+}
