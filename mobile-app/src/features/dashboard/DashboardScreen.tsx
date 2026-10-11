@@ -1,6 +1,6 @@
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AlarmClock, ArrowUpRight, CircleCheck, FileText, FolderOpen, House, Hourglass, Newspaper, NotebookPen } from 'lucide-react-native';
@@ -10,6 +10,7 @@ import { SurfaceCard } from '@/components/SurfaceCard';
 import { featureCards, navItems } from './dashboardData';
 import { colors, radii, spacing } from '@/theme/tokens';
 import { useAlarm, formatAlarmTime } from '@/features/alarm/alarmState';
+import avatarImage from '@/assests/raw/avtar.png';
 
 const icons = { alarm: AlarmClock, hourglass: Hourglass, 'notebook-pen': NotebookPen, newspaper: Newspaper };
 const navIcons = { house: House, alarm: AlarmClock, 'circle-check': CircleCheck, hourglass: Hourglass };
@@ -81,7 +82,9 @@ export default function DashboardScreen() {
           <Path d="M0 0H130C148 0 156 8 164 22C173 38 184 46 200 46C216 46 227 38 236 22C244 8 252 0 270 0H400" stroke={colors.border} strokeWidth={1} fill="none" />
         </Svg>
         <View style={styles.navGroup}>{navItems.slice(0, 2).map((item) => <NavItem key={item.label} item={item} active={activeTab === item.label} onPress={handleNavPress} />)}</View>
-        <Pressable accessibilityLabel="Cadence Voice Assistant" style={({ pressed }) => [styles.aiButton, pressed && styles.pressed]}><CadenceMark size={54} /></Pressable>
+        <Pressable accessibilityLabel="Cadence Voice Assistant" style={({ pressed }) => [styles.aiButton, pressed && styles.pressed]}>
+          <Image source={avatarImage} style={styles.aiAvatar} resizeMode="contain" />
+        </Pressable>
         <View style={styles.navGroup}>{navItems.slice(2).map((item) => <NavItem key={item.label} item={item} active={activeTab === item.label} onPress={handleNavPress} />)}</View>
       </View>
     </SafeAreaView>
@@ -136,9 +139,10 @@ const styles = StyleSheet.create({
   figmaMark: { width: 12, height: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 1 },
   navGroup: { flex: 1, flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', height: 76 },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, minHeight: 76, flexDirection: 'row', alignItems: 'center', zIndex: 4, paddingHorizontal: 6 },
-  footerSvg: { position: 'absolute', top: 0, left: 0, right: 0, width: '100%', height: 76 },
-  aiButton: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginTop: -28, shadowColor: '#080808', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.16, shadowRadius: 24, elevation: 6, zIndex: 5 },
-  navItem: { width: 58, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  footerSvg: { position: 'absolute', top: 5, left: 6, right: 5, width: '100%', height: 74 },
+  aiButton: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', marginTop: -46, zIndex: 5 },
+  aiAvatar: { width: 126, height: 113, borderRadius: 57 },
+  navItem: { width: 48, alignItems: 'center', justifyContent: 'center', gap: 3 },
   navLabel: { color: colors.secondary, fontFamily: 'Inter_500Medium', fontSize: 11, lineHeight: 14 },
   navActive: { color: colors.ink, fontFamily: 'Inter_600SemiBold' },
 });

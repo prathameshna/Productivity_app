@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import {
+  Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,22 +17,22 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
 import {
   AlarmClock,
   CircleCheck,
+  EllipsisVertical,
   House,
   Hourglass,
-  MoreVertical,
   Plus,
-  Power,
 } from 'lucide-react-native';
-import { CadenceMark } from '@/components/CadenceMark';
-import { colors, radii, spacing } from '@/theme/tokens';
+import avatarImage from '@/assests/raw/avtar.png';
+import { colors, spacing } from '@/theme/tokens';
 import {
   calculateCountdownText,
-  disableAllAlarms,
+  deleteDisabledAlarms,
   formatRepeatDays,
+  getNextEnabledAlarm,
   setEditingAlarm,
   toggleAlarmEnabled,
   useAlarms,
@@ -48,8 +50,11 @@ export default function AlarmMainScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const alarms = useAlarms();
-  const [showOptions, setShowOptions] = useState(false);
   const [activeTab, setActiveTab] = useState('Alarm');
+  const [showMenu, setShowMenu] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showInfoDialog, setShowInfoDialog] = useState(false);
+  const [infoMessage, setInfoMessage] = useState('');
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -61,10 +66,10 @@ export default function AlarmMainScreen() {
   if (!fontsLoaded) return null;
 
   const anyEnabled = alarms.some((a) => a.enabled);
-  const firstEnabled = alarms.find((a) => a.enabled);
+  const nextAlarm = getNextEnabledAlarm(alarms);
 
-  const statusText = anyEnabled && firstEnabled
-    ? calculateCountdownText(firstEnabled.hour, firstEnabled.minute, firstEnabled.period)
+  const countdownText = anyEnabled && nextAlarm
+    ? calculateCountdownText(nextAlarm.hour, nextAlarm.minute, nextAlarm.period)
     : 'All alarms are off';
 
   const handleCardPress = (id: string) => {
@@ -85,59 +90,77 @@ export default function AlarmMainScreen() {
     setActiveTab(label);
   };
 
+  const handleDeleteDisabledSelect = () => {
+    setShowMenu(false);
+    const disabledCount = alarms.filter((a) => !a.enabled).length;
+    if (disabledCount === 0) {
+      setInfoMessage('There are no disabled alarms to delete.');
+      setShowInfoDialog(true);
+      return;
+    }
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteDisabledAlarms();
+    setShowConfirmDialog(false);
+  };
+
+  const disabledAlarmsCount = alarms.filter((a) => !a.enabled).length;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.container}>
+        {showMenu && (
+          <Pressable
+            style={styles.menuBackdrop}
+            onPress={() => setShowMenu(false)}
+          />
+        )}
+
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingBottom: 120 + insets.bottom },
+            { paddingBottom: Math.max(insets.bottom, 16) + 160 },
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* BEGIN: Header */}
-          <View style={styles.header}>
-            <Text style={styles.brandTitle}>SuperAlarm</Text>
+          {/* BEGIN: AlarmSummaryCard */}
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryContent}>
+              <Text style={styles.summaryCountdown}>{countdownText}</Text>
+            </View>
 
-            <View style={styles.optionsWrapper}>
+            <View style={styles.menuWrapper}>
               <Pressable
                 accessibilityLabel="More options"
-                onPress={() => setShowOptions(!showOptions)}
+                onPress={() => setShowMenu((prev) => !prev)}
                 style={({ pressed }) => [
-                  styles.moreBtn,
-                  pressed && styles.pressed,
+                  styles.threeDotBtn,
+                  pressed && styles.threeDotPressed,
                 ]}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
-                <MoreVertical size={22} color={colors.ink} />
+                <EllipsisVertical size={20} color={colors.secondary} strokeWidth={2} />
               </Pressable>
 
-              {/* Options Dropdown Menu */}
-              {showOptions && (
+              {showMenu && (
                 <View style={styles.dropdownMenu}>
                   <Pressable
-                    onPress={() => {
-                      disableAllAlarms();
-                      setShowOptions(false);
-                    }}
+                    accessibilityLabel="Delete disabled alarms"
+                    onPress={handleDeleteDisabledSelect}
                     style={({ pressed }) => [
                       styles.dropdownItem,
                       pressed && styles.dropdownItemPressed,
                     ]}
                   >
-                    <Power size={18} color={colors.secondary} />
-                    <Text style={styles.dropdownText}>Disable alarms</Text>
+                    <Text style={styles.dropdownText}>Delete Disabled Alarms</Text>
                   </Pressable>
                 </View>
               )}
             </View>
           </View>
-          {/* END: Header */}
-
-          {/* BEGIN: StatusHeading */}
-          <View style={styles.statusSection}>
-            <Text style={styles.statusHeading}>{statusText}</Text>
-          </View>
-          {/* END: StatusHeading */}
+          {/* END: AlarmSummaryCard */}
 
           {/* BEGIN: AlarmList */}
           <View style={styles.alarmList}>
@@ -165,7 +188,7 @@ export default function AlarmMainScreen() {
 
                       {/* 2x2 Grid / Mission indicator */}
                       <View style={styles.missionIndicator}>
-                        <Svg width={18} height={18} viewBox="0 0 24 24" fill={colors.secondary}>
+                        <Svg width={16} height={16} viewBox="0 0 24 24" fill={colors.secondary}>
                           <Rect x="3" y="3" width="7" height="7" rx="1.5" />
                           <Rect x="14" y="3" width="7" height="7" rx="1.5" />
                           <Rect x="3" y="14" width="7" height="7" rx="1.5" />
@@ -202,7 +225,13 @@ export default function AlarmMainScreen() {
         </ScrollView>
 
         {/* BEGIN: FloatingActionButton */}
-        <View style={styles.fabWrapper} pointerEvents="box-none">
+        <View
+          style={[
+            styles.fabWrapper,
+            { bottom: Math.max(insets.bottom, 12) + 90 },
+          ]}
+          pointerEvents="box-none"
+        >
           <Pressable
             accessibilityLabel="Add new alarm"
             onPress={handleAddPress}
@@ -211,7 +240,7 @@ export default function AlarmMainScreen() {
               pressed && styles.fabPressed,
             ]}
           >
-            <Plus size={32} color={colors.ink} strokeWidth={2.8} />
+            <Plus size={24} color={colors.ink} strokeWidth={2.8} />
           </Pressable>
         </View>
         {/* END: FloatingActionButton */}
@@ -234,8 +263,11 @@ export default function AlarmMainScreen() {
             ))}
           </View>
 
-          <Pressable accessibilityLabel="Cadence Voice Assistant" style={({ pressed }) => [styles.aiButton, pressed && styles.pressed]}>
-            <CadenceMark size={54} />
+          <Pressable
+            accessibilityLabel="Cadence Voice Assistant"
+            style={({ pressed }) => [styles.aiButton, pressed && styles.pressed]}
+          >
+            <Image source={avatarImage} style={styles.aiAvatar} resizeMode="contain" />
           </Pressable>
 
           <View style={styles.navGroup}>
@@ -250,6 +282,81 @@ export default function AlarmMainScreen() {
           </View>
         </View>
         {/* END: BottomNavigationFooter */}
+
+        {/* Confirmation Dialog */}
+        <Modal
+          visible={showConfirmDialog}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowConfirmDialog(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowConfirmDialog(false)}
+          >
+            <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.modalTitle}>Delete Disabled Alarms</Text>
+              <Text style={styles.modalMessage}>
+                Are you sure you want to delete {disabledAlarmsCount} disabled alarm{disabledAlarmsCount > 1 ? 's' : ''}? Enabled alarms will remain unchanged.
+              </Text>
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  accessibilityLabel="Cancel"
+                  onPress={() => setShowConfirmDialog(false)}
+                  style={({ pressed }) => [
+                    styles.modalCancelBtn,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </Pressable>
+
+                <Pressable
+                  accessibilityLabel="Delete"
+                  onPress={handleConfirmDelete}
+                  style={({ pressed }) => [
+                    styles.modalDeleteBtn,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.modalDeleteText}>Delete</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {/* Info Dialog */}
+        <Modal
+          visible={showInfoDialog}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowInfoDialog(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowInfoDialog(false)}
+          >
+            <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.modalTitle}>Delete Disabled Alarms</Text>
+              <Text style={styles.modalMessage}>{infoMessage}</Text>
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  accessibilityLabel="OK"
+                  onPress={() => setShowInfoDialog(false)}
+                  style={({ pressed }) => [
+                    styles.modalOkBtn,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.modalOkText}>OK</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -288,87 +395,100 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.page,
-    paddingTop: 12,
+    paddingTop: 16,
   },
-  header: {
+  summaryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#171715',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
-    paddingBottom: 24,
+    marginBottom: 16,
     zIndex: 40,
   },
-  brandTitle: {
+  summaryContent: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  summaryCountdown: {
     fontFamily: 'Inter_700Bold',
-    fontSize: 28,
+    fontSize: 20,
     color: colors.ink,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
+    lineHeight: 26,
   },
-  optionsWrapper: {
+  menuWrapper: {
     position: 'relative',
-  },
-  moreBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  threeDotBtn: {
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  threeDotPressed: {
+    opacity: 0.5,
   },
   dropdownMenu: {
     position: 'absolute',
     right: 0,
-    top: 48,
-    width: 180,
+    top: 34,
+    width: 200,
     backgroundColor: colors.surface,
-    borderRadius: 22,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
     shadowColor: '#171715',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-    zIndex: 50,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 10,
+    zIndex: 100,
   },
   dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
+    borderRadius: 10,
   },
   dropdownItemPressed: {
     backgroundColor: colors.surfaceLow,
   },
   dropdownText: {
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Inter_500Medium',
     fontSize: 14,
     color: colors.ink,
   },
-  statusSection: {
-    marginTop: 4,
-    marginBottom: 28,
-  },
-  statusHeading: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 22,
-    color: colors.ink,
-    letterSpacing: -0.3,
+  menuBackdrop: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 0,
   },
   alarmList: {
-    gap: 16,
+    gap: 12,
   },
   alarmCard: {
     backgroundColor: colors.surface,
-    borderRadius: 26,
-    padding: 20,
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: '#171715',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 2,
   },
   cardPressed: {
@@ -385,37 +505,37 @@ const styles = StyleSheet.create({
   },
   repeatText: {
     fontFamily: 'Inter_600SemiBold',
-    fontSize: 13,
+    fontSize: 12,
     color: colors.secondary,
     letterSpacing: 0.2,
   },
   timeRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 6,
-    marginTop: 4,
+    gap: 5,
+    marginTop: 2,
   },
   timeText: {
     fontFamily: 'Inter_700Bold',
-    fontSize: 40,
+    fontSize: 32,
     color: colors.ink,
     letterSpacing: -0.5,
-    lineHeight: 44,
+    lineHeight: 36,
   },
   periodText: {
     fontFamily: 'Inter_700Bold',
-    fontSize: 20,
+    fontSize: 17,
     color: colors.ink,
   },
   missionIndicator: {
-    marginTop: 12,
+    marginTop: 8,
     opacity: 0.75,
   },
   toggleTrack: {
-    width: 56,
-    height: 32,
-    borderRadius: 16,
-    padding: 4,
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    padding: 3,
     justifyContent: 'center',
   },
   toggleTrackOn: {
@@ -425,9 +545,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
@@ -444,22 +564,21 @@ const styles = StyleSheet.create({
   },
   fabWrapper: {
     position: 'absolute',
-    bottom: 96,
-    right: 24,
+    right: 20,
     zIndex: 30,
   },
   fabButton: {
-    width: 68,
-    height: 68,
-    borderRadius: 22,
+    width: 52,
+    height: 52,
+    borderRadius: 18,
     backgroundColor: '#FFD026',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#FFD026',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
   fabPressed: {
     transform: [{ scale: 0.94 }],
@@ -481,28 +600,24 @@ const styles = StyleSheet.create({
   },
   footerSvg: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 5,
+    left: 6,
+    right: 5,
     width: '100%',
-    height: 76,
+    height: 74,
   },
   aiButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    width: 72,
+    height: 72,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -28,
-    shadowColor: '#080808',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    elevation: 6,
+    marginTop: -46,
     zIndex: 5,
+  },
+  aiAvatar: {
+    width: 126,
+    height: 113,
+    borderRadius: 57,
   },
   navGroup: {
     flex: 1,
@@ -512,7 +627,7 @@ const styles = StyleSheet.create({
     height: 76,
   },
   navItem: {
-    width: 58,
+    width: 48,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
@@ -526,5 +641,78 @@ const styles = StyleSheet.create({
   navActive: {
     color: colors.ink,
     fontFamily: 'Inter_600SemiBold',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: colors.surface,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 24,
+    shadowColor: '#171715',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 18,
+    color: colors.ink,
+    letterSpacing: -0.3,
+  },
+  modalMessage: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: colors.secondary,
+    lineHeight: 20,
+    marginTop: 8,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 22,
+  },
+  modalCancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceLow,
+  },
+  modalCancelText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: colors.ink,
+  },
+  modalDeleteBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: '#DC2626',
+  },
+  modalDeleteText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  modalOkBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    backgroundColor: colors.ink,
+  },
+  modalOkText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: '#FFFFFF',
   },
 });

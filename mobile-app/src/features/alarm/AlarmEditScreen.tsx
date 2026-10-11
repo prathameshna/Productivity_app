@@ -24,16 +24,14 @@ import Svg, {
   Polyline,
   Rect,
 } from 'react-native-svg';
-import { ChevronRight, Trash2 } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { colors, radii, spacing } from '@/theme/tokens';
 import {
   calculateCountdownText,
   DAY_LABELS,
-  deleteCurrentAlarm,
   formatRepeatDays,
   getAlarm,
-  getActiveEditingAlarmId,
   saveCurrentAlarm,
   updateAlarm,
   useAlarm,
@@ -43,7 +41,6 @@ export default function AlarmEditScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const initial = getAlarm();
-  const activeId = getActiveEditingAlarmId();
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -146,11 +143,6 @@ export default function AlarmEditScreen() {
     router.back();
   };
 
-  const handleDelete = () => {
-    deleteCurrentAlarm();
-    router.back();
-  };
-
   const isCheckboxChecked = repeatDays.length > 0;
 
   return (
@@ -190,17 +182,7 @@ export default function AlarmEditScreen() {
                 </Svg>
               </Pressable>
               <Text style={styles.headerTitle}>Edit alarm</Text>
-              {activeId && !activeId.startsWith('alarm-17') ? (
-                <Pressable
-                  accessibilityLabel="Delete alarm"
-                  onPress={handleDelete}
-                  style={({ pressed }) => [styles.deleteIconBtn, pressed && styles.pressed]}
-                >
-                  <Trash2 size={20} color={colors.secondary} />
-                </Pressable>
-              ) : (
-                <View style={{ width: 36 }} />
-              )}
+              <View style={{ width: 36 }} />
             </View>
             {/* END: NavigationHeader */}
 
@@ -728,14 +710,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceLow,
-  },
-  deleteIconBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,

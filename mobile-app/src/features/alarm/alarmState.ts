@@ -69,6 +69,8 @@ const initialAlarms: AlarmData[] = [
   },
 ];
 
+const STORAGE_KEY = '@productivity/alarms_data';
+
 let alarms: AlarmData[] = [...initialAlarms];
 let activeEditingAlarmId: string | null = initialAlarms[0].id;
 let activeEditingAlarm: AlarmData = { ...initialAlarms[0] };
@@ -78,6 +80,82 @@ const listeners = new Set<() => void>();
 function notify() {
   listeners.forEach((listener) => listener());
 }
+
+export function saveAlarmsToStorage() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(alarms));
+    }
+  } catch {
+    // Ignore web storage errors
+  }
+
+  try {
+    // Attempt dynamic native file storage if running in native Expo environment
+    const FileSystem = require('expo-file-system/legacy');
+    if (FileSystem && FileSystem.documentDirectory) {
+      const fileUri = `${FileSystem.documentDirectory}productivity_alarms.json`;
+      FileSystem.writeAsStringAsync(fileUri, JSON.stringify(alarms)).catch(() => {});
+    }
+  } catch {
+    // Ignore native file errors
+  }
+}
+
+export function loadAlarmsFromStorage() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          alarms = parsed;
+          if (alarms.length > 0) {
+            activeEditingAlarmId = alarms[0].id;
+            activeEditingAlarm = { ...alarms[0] };
+          } else {
+            activeEditingAlarmId = null;
+            activeEditingAlarm = { ...defaultAlarmTemplate };
+          }
+          notify();
+          return;
+        }
+      }
+    }
+  } catch {
+    // Ignore web storage errors
+  }
+
+  try {
+    const FileSystem = require('expo-file-system/legacy');
+    if (FileSystem && FileSystem.documentDirectory) {
+      const fileUri = `${FileSystem.documentDirectory}productivity_alarms.json`;
+      FileSystem.getInfoAsync(fileUri).then((info: { exists: boolean }) => {
+        if (info.exists) {
+          FileSystem.readAsStringAsync(fileUri).then((content: string) => {
+            const parsed = JSON.parse(content);
+            if (Array.isArray(parsed)) {
+              alarms = parsed;
+              if (alarms.length > 0) {
+                activeEditingAlarmId = alarms[0].id;
+                activeEditingAlarm = { ...alarms[0] };
+              } else {
+                activeEditingAlarmId = null;
+                activeEditingAlarm = { ...defaultAlarmTemplate };
+              }
+              notify();
+            }
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
+  } catch {
+    // Ignore native file errors
+  }
+}
+
+// Initial load from storage
+loadAlarmsFromStorage();
 
 export function getAlarms(): AlarmData[] {
   return alarms;
@@ -117,6 +195,7 @@ export function updateAlarm(patch: Partial<AlarmData>): AlarmData {
     const index = alarms.findIndex((a) => a.id === activeEditingAlarmId);
     if (index !== -1) {
       alarms[index] = { ...activeEditingAlarm };
+      saveAlarmsToStorage();
     }
   }
   notify();
@@ -137,6 +216,7 @@ export function saveCurrentAlarm(patch?: Partial<AlarmData>) {
   } else {
     alarms.push({ ...activeEditingAlarm });
   }
+  saveAlarmsToStorage();
   notify();
 }
 
@@ -150,8 +230,32 @@ export function deleteCurrentAlarm() {
       activeEditingAlarmId = null;
       activeEditingAlarm = { ...defaultAlarmTemplate };
     }
+    saveAlarmsToStorage();
     notify();
   }
+}
+
+export function deleteDisabledAlarms(): number {
+  const initialCount = alarms.length;
+  alarms = alarms.filter((a) => a.enabled);
+  const deletedCount = initialCount - alarms.length;
+
+  if (activeEditingAlarmId) {
+    const exists = alarms.some((a) => a.id === activeEditingAlarmId);
+    if (!exists) {
+      if (alarms.length > 0) {
+        activeEditingAlarmId = alarms[0].id;
+        activeEditingAlarm = { ...alarms[0] };
+      } else {
+        activeEditingAlarmId = null;
+        activeEditingAlarm = { ...defaultAlarmTemplate };
+      }
+    }
+  }
+
+  saveAlarmsToStorage();
+  notify();
+  return deletedCount;
 }
 
 export function toggleAlarmEnabled(id: string) {
@@ -164,6 +268,7 @@ export function toggleAlarmEnabled(id: string) {
   if (activeEditingAlarmId && activeEditingAlarm.id === id) {
     activeEditingAlarm.enabled = !activeEditingAlarm.enabled;
   }
+  saveAlarmsToStorage();
   notify();
 }
 
@@ -172,6 +277,7 @@ export function disableAllAlarms() {
   if (activeEditingAlarm) {
     activeEditingAlarm.enabled = false;
   }
+  saveAlarmsToStorage();
   notify();
 }
 
@@ -208,6 +314,29 @@ export function formatRepeatDays(days: number[]): string {
   const isWeekends = sorted.length === 2 && sorted.includes(0) && sorted.includes(6);
   if (isWeekends) return 'Weekends';
   return sorted.map((d) => DAY_NAMES[d]).join(', ');
+}
+
+export function getNextEnabledAlarm(alarmList: AlarmData[]): AlarmData | null {
+  const enabled = alarmList.filter((a) => a.enabled);
+  if (enabled.length === 0) return null;
+  const now = new Date();
+  let minDiff = Infinity;
+  let nextAlarm = enabled[0];
+  for (const alarm of enabled) {
+    const target = new Date(now);
+    let h24 = alarm.hour % 12;
+    if (alarm.period === 'pm') h24 += 12;
+    target.setHours(h24, alarm.minute, 0, 0);
+    if (target.getTime() <= now.getTime()) {
+      target.setDate(target.getDate() + 1);
+    }
+    const diff = target.getTime() - now.getTime();
+    if (diff < minDiff) {
+      minDiff = diff;
+      nextAlarm = alarm;
+    }
+  }
+  return nextAlarm;
 }
 
 export function calculateCountdownText(hour: number, minute: number, period: 'am' | 'pm'): string {
