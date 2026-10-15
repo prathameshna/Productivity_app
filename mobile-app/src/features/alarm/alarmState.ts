@@ -75,10 +75,20 @@ let alarms: AlarmData[] = [...initialAlarms];
 let activeEditingAlarmId: string | null = initialAlarms[0].id;
 let activeEditingAlarm: AlarmData = { ...initialAlarms[0] };
 
-const listeners = new Set<() => void>();
+const alarmListeners = new Set<() => void>();
+const alarmsListeners = new Set<() => void>();
 
-function notify() {
-  listeners.forEach((listener) => listener());
+function notifyAlarm() {
+  alarmListeners.forEach((listener) => listener());
+}
+
+function notifyAlarms() {
+  alarmsListeners.forEach((listener) => listener());
+}
+
+function notifyAll() {
+  notifyAlarm();
+  notifyAlarms();
 }
 
 export function saveAlarmsToStorage() {
@@ -117,7 +127,7 @@ export function loadAlarmsFromStorage() {
             activeEditingAlarmId = null;
             activeEditingAlarm = { ...defaultAlarmTemplate };
           }
-          notify();
+          notifyAll();
           return;
         }
       }
@@ -143,7 +153,7 @@ export function loadAlarmsFromStorage() {
                 activeEditingAlarmId = null;
                 activeEditingAlarm = { ...defaultAlarmTemplate };
               }
-              notify();
+              notifyAll();
             }
           }).catch(() => {});
         }
@@ -165,17 +175,13 @@ export function getAlarm(): AlarmData {
   return activeEditingAlarm;
 }
 
-export function getActiveEditingAlarmId(): string | null {
-  return activeEditingAlarmId;
-}
-
 export function setEditingAlarm(id?: string) {
   if (id) {
     const existing = alarms.find((a) => a.id === id);
     if (existing) {
       activeEditingAlarmId = id;
       activeEditingAlarm = { ...existing };
-      notify();
+      notifyAlarm();
       return;
     }
   }
@@ -186,7 +192,7 @@ export function setEditingAlarm(id?: string) {
     ...defaultAlarmTemplate,
     id: newId,
   };
-  notify();
+  notifyAlarm();
 }
 
 export function updateAlarm(patch: Partial<AlarmData>): AlarmData {
@@ -198,7 +204,7 @@ export function updateAlarm(patch: Partial<AlarmData>): AlarmData {
       saveAlarmsToStorage();
     }
   }
-  notify();
+  notifyAll();
   return activeEditingAlarm;
 }
 
@@ -217,7 +223,7 @@ export function saveCurrentAlarm(patch?: Partial<AlarmData>) {
     alarms.push({ ...activeEditingAlarm });
   }
   saveAlarmsToStorage();
-  notify();
+  notifyAll();
 }
 
 export function deleteCurrentAlarm() {
@@ -231,7 +237,7 @@ export function deleteCurrentAlarm() {
       activeEditingAlarm = { ...defaultAlarmTemplate };
     }
     saveAlarmsToStorage();
-    notify();
+    notifyAll();
   }
 }
 
@@ -254,7 +260,7 @@ export function deleteDisabledAlarms(): number {
   }
 
   saveAlarmsToStorage();
-  notify();
+  notifyAll();
   return deletedCount;
 }
 
@@ -269,22 +275,20 @@ export function toggleAlarmEnabled(id: string) {
     activeEditingAlarm.enabled = !activeEditingAlarm.enabled;
   }
   saveAlarmsToStorage();
-  notify();
-}
-
-export function disableAllAlarms() {
-  alarms = alarms.map((a) => ({ ...a, enabled: false }));
-  if (activeEditingAlarm) {
-    activeEditingAlarm.enabled = false;
-  }
-  saveAlarmsToStorage();
-  notify();
+  notifyAll();
 }
 
 export function subscribeAlarm(listener: () => void): () => void {
-  listeners.add(listener);
+  alarmListeners.add(listener);
   return () => {
-    listeners.delete(listener);
+    alarmListeners.delete(listener);
+  };
+}
+
+export function subscribeAlarms(listener: () => void): () => void {
+  alarmsListeners.add(listener);
+  return () => {
+    alarmsListeners.delete(listener);
   };
 }
 
@@ -293,7 +297,7 @@ export function useAlarm(): AlarmData {
 }
 
 export function useAlarms(): AlarmData[] {
-  return useSyncExternalStore(subscribeAlarm, getAlarms, getAlarms);
+  return useSyncExternalStore(subscribeAlarms, getAlarms, getAlarms);
 }
 
 export function formatAlarmTime(hour: number, minute: number, period: 'am' | 'pm'): string {

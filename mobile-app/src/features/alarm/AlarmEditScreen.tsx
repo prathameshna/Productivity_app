@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
+  FlatList,
   Modal,
   Pressable,
   ScrollView,
@@ -10,13 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import {
-  useFonts,
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
 import Svg, {
   Circle,
   Line,
@@ -30,28 +26,306 @@ import { colors, radii, spacing } from '@/theme/tokens';
 import {
   calculateCountdownText,
   DAY_LABELS,
+  DAY_NAMES,
   formatRepeatDays,
   getAlarm,
   saveCurrentAlarm,
-  updateAlarm,
   useAlarm,
 } from './alarmState';
+
+const ROW_HEIGHT = 40;
+const VISIBLE_ROWS = 5;
+const HOUR_VALUES = Array.from({ length: 12 }, (_, index) => index + 1);
+const MINUTE_VALUES = Array.from({ length: 60 }, (_, index) => index);
+const formatHour = (value: number) => String(value);
+const formatMinute = (value: number) => value.toString().padStart(2, '0');
+const WHEEL_PADDING = ROW_HEIGHT * Math.floor(VISIBLE_ROWS / 2);
+const MIDDLE_CYCLE = 1;
+
+type WheelItemProps = {
+  value: number;
+  index: number;
+  scrollOffset: Animated.Value;
+  formatValue: (value: number) => string;
+  onPress: (index: number) => void;
+};
+
+const WheelItem = memo(function WheelItem({
+  value,
+  index,
+  scrollOffset,
+  formatValue,
+  onPress,
+}: WheelItemProps) {
+  const inputRange = [
+    (index - 2) * ROW_HEIGHT,
+    (index - 1) * ROW_HEIGHT,
+    index * ROW_HEIGHT,
+    (index + 1) * ROW_HEIGHT,
+    (index + 2) * ROW_HEIGHT,
+  ];
+  const scale = scrollOffset.interpolate({
+    inputRange,
+    outputRange: [0.65, 0.82, 1, 0.82, 0.65],
+    extrapolate: 'clamp',
+  });
+  const opacity = scrollOffset.interpolate({
+    inputRange,
+    outputRange: [0.35, 0.6, 1, 0.6, 0.35],
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <Pressable
+      onPress={() => onPress(index)}
+      style={styles.wheelItem}
+    >
+      <Animated.Text
+        style={[
+          styles.wheelText,
+          { opacity, transform: [{ scale }] },
+        ]}
+      >
+        {formatValue(value)}
+      </Animated.Text>
+    </Pressable>
+  );
+});
+
+const WheelColumn = memo(function WheelColumn({
+  values,
+  selectedValue,
+  formatValue,
+  onChange,
+  width,
+}: {
+  values: readonly number[];
+  selectedValue: number;
+  formatValue: (value: number) => string;
+  onChange: (value: number) => void;
+  width: number;
+}) {
+  const scrollRef = useRef<FlatList<number>>(null);
+  const selectedIndex = Math.max(0, values.indexOf(selectedValue));
+  const initialIndex = values.length * MIDDLE_CYCLE + selectedIndex;
+  const initialOffset = initialIndex * ROW_HEIGHT;
+  const scrollOffset = useRef(new Animated.Value(initialOffset)).current;
+  const lastSettledOffset = useRef(initialOffset);
+  const lastEmittedValue = useRef<number | null>(null);
+
+  const repeatedValues = useRef<number[]>(
+    Array.from(
+      { length: values.length * 3 },
+      (_, index) => values[index % values.length],
+    ),
+  ).current;
+  const handleScroll = useRef(
+    Animated.event(
+      [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
+      { useNativeDriver: true },
+    ),
+  ).current;
+
+  useEffect(() => {
+    if (lastEmittedValue.current === selectedValue) {
+      lastEmittedValue.current = null;
+      return;
+    }
+    const targetIndex = values.length * MIDDLE_CYCLE + selectedIndex;
+    const targetOffset = targetIndex * ROW_HEIGHT;
+    scrollRef.current?.scrollToOffset({ offset: targetOffset, animated: false });
+    scrollOffset.setValue(targetOffset);
+    lastSettledOffset.current = targetOffset;
+  }, [selectedIndex, selectedValue, values.length]);
+
+  const handleScrollEnd = (offsetY: number) => {
+    const settledOffset = Math.round(offsetY / ROW_HEIGHT) * ROW_HEIGHT;
+    if (settledOffset === lastSettledOffset.current) return;
+    lastSettledOffset.current = settledOffset;
+    const rawIndex = Math.round(offsetY / ROW_HEIGHT);
+    const valueIndex = ((rawIndex % values.length) + values.length) % values.length;
+    const nextValue = values[valueIndex];
+    lastEmittedValue.current = nextValue;
+    onChange(nextValue);
+
+    if (rawIndex < values.length || rawIndex >= values.length * 2) {
+      const targetOffset = (values.length + valueIndex) * ROW_HEIGHT;
+      scrollRef.current?.scrollToOffset({ offset: targetOffset, animated: false });
+      scrollOffset.setValue(targetOffset);
+      lastSettledOffset.current = targetOffset;
+    }
+  };
+
+  return (
+    <Animated.FlatList
+      ref={scrollRef}
+      data={repeatedValues}
+      keyExtractor={(_, index) => `${index}`}
+      style={[styles.wheelColumn, { width, height: ROW_HEIGHT * VISIBLE_ROWS }]}
+      contentContainerStyle={styles.wheelContent}
+      initialScrollIndex={initialIndex}
+      getItemLayout={(_, index) => ({
+        length: ROW_HEIGHT,
+        offset: index * ROW_HEIGHT,
+        index,
+      })}
+      initialNumToRender={11}
+      maxToRenderPerBatch={11}
+      windowSize={7}
+      removeClippedSubviews
+      showsVerticalScrollIndicator={false}
+      snapToInterval={ROW_HEIGHT}
+      snapToAlignment="start"
+      decelerationRate="fast"
+      scrollEventThrottle={16}
+      nestedScrollEnabled
+      onScroll={handleScroll}
+      onMomentumScrollEnd={(event) => handleScrollEnd(event.nativeEvent.contentOffset.y)}
+      onScrollEndDrag={(event) => {
+        if (event.nativeEvent.velocity?.y === 0) {
+          handleScrollEnd(event.nativeEvent.contentOffset.y);
+        }
+      }}
+      renderItem={({ item, index }) => (
+        <WheelItem
+          value={item}
+          index={index}
+          scrollOffset={scrollOffset}
+          formatValue={formatValue}
+          onPress={(targetIndex) => scrollRef.current?.scrollToOffset({
+            offset: targetIndex * ROW_HEIGHT,
+            animated: true,
+          })}
+        />
+      )}
+    />
+  );
+});
+
+const PeriodSelector = memo(function PeriodSelector({
+  value,
+  onChange,
+  width,
+}: {
+  value: 'am' | 'pm';
+  onChange: (val: 'am' | 'pm') => void;
+  width: number;
+}) {
+  const scrollRef = useRef<FlatList<'am' | 'pm'>>(null);
+  const selectedIndex = value === 'am' ? 0 : 1;
+  const scrollOffset = useRef(
+    new Animated.Value(selectedIndex * ROW_HEIGHT),
+  ).current;
+  const lastSettledIndex = useRef(selectedIndex);
+  const lastEmittedPeriod = useRef<'am' | 'pm' | null>(null);
+  const periods = ['am', 'pm'] as const;
+  const handleScroll = useRef(
+    Animated.event(
+      [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
+      { useNativeDriver: true },
+    ),
+  ).current;
+
+  useEffect(() => {
+    if (lastEmittedPeriod.current === value) {
+      lastEmittedPeriod.current = null;
+      return;
+    }
+    scrollRef.current?.scrollToOffset({ offset: selectedIndex * ROW_HEIGHT, animated: false });
+    scrollOffset.setValue(selectedIndex * ROW_HEIGHT);
+    lastSettledIndex.current = selectedIndex;
+  }, [scrollOffset, selectedIndex, value]);
+
+  const handleScrollEnd = (offsetY: number) => {
+    const rawIndex = Math.max(0, Math.min(1, Math.round(offsetY / ROW_HEIGHT)));
+    if (rawIndex === lastSettledIndex.current) return;
+    lastSettledIndex.current = rawIndex;
+    lastEmittedPeriod.current = periods[rawIndex];
+    onChange(lastEmittedPeriod.current);
+  };
+
+  return (
+    <Animated.FlatList
+      ref={scrollRef}
+      data={periods}
+      keyExtractor={(item) => item}
+      style={[styles.periodColumn, { width }]}
+      contentContainerStyle={styles.periodContent}
+      initialScrollIndex={selectedIndex}
+      getItemLayout={(_, index) => ({
+        length: ROW_HEIGHT,
+        offset: index * ROW_HEIGHT,
+        index,
+      })}
+      initialNumToRender={2}
+      maxToRenderPerBatch={2}
+      windowSize={3}
+      showsVerticalScrollIndicator={false}
+      snapToInterval={ROW_HEIGHT}
+      snapToAlignment="start"
+      decelerationRate="fast"
+      scrollEventThrottle={16}
+      nestedScrollEnabled
+      onScroll={handleScroll}
+      onMomentumScrollEnd={(event) => handleScrollEnd(event.nativeEvent.contentOffset.y)}
+      onScrollEndDrag={(event) => {
+        if (event.nativeEvent.velocity?.y === 0) {
+          handleScrollEnd(event.nativeEvent.contentOffset.y);
+        }
+      }}
+      renderItem={({ item: periodValue, index }) => {
+        const scale = scrollOffset.interpolate({
+          inputRange: [
+            (index - 2) * ROW_HEIGHT,
+            (index - 1) * ROW_HEIGHT,
+            index * ROW_HEIGHT,
+            (index + 1) * ROW_HEIGHT,
+            (index + 2) * ROW_HEIGHT,
+          ],
+          outputRange: [0.78, 0.88, 1, 0.88, 0.78],
+          extrapolate: 'clamp',
+        });
+        const opacity = scrollOffset.interpolate({
+          inputRange: [
+            (index - 2) * ROW_HEIGHT,
+            (index - 1) * ROW_HEIGHT,
+            index * ROW_HEIGHT,
+            (index + 1) * ROW_HEIGHT,
+            (index + 2) * ROW_HEIGHT,
+          ],
+          outputRange: [0.35, 0.6, 1, 0.6, 0.35],
+          extrapolate: 'clamp',
+        });
+
+        return (
+          <Pressable
+            style={styles.wheelItem}
+            onPress={() => scrollRef.current?.scrollToOffset({
+              offset: index * ROW_HEIGHT,
+              animated: true,
+            })}
+          >
+            <Animated.Text
+              style={[styles.periodText, { opacity, transform: [{ scale }] }]}
+            >
+              {periodValue}
+            </Animated.Text>
+          </Pressable>
+        );
+      }}
+    />
+  );
+});
 
 export default function AlarmEditScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const initial = getAlarm();
 
-  const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-  });
-
   const [hour, setHour] = useState(initial.hour);
   const [minute, setMinute] = useState(initial.minute);
   const [period, setPeriod] = useState<'am' | 'pm'>(initial.period);
+  const periodTransition = useRef(new Animated.Value(initial.period === 'am' ? 0 : 1)).current;
   const [repeatDays, setRepeatDays] = useState<number[]>(initial.repeatDays);
   const [name, setName] = useState(initial.name);
   const [mission, setMission] = useState(initial.mission);
@@ -69,59 +343,20 @@ export default function AlarmEditScreen() {
     onSelect: (val: string) => void;
   } | null>(null);
 
-  if (!fontsLoaded) return null;
-
   // Toggle individual day
   const toggleDay = (dayIndex: number) => {
-    if (repeatDays.includes(dayIndex)) {
-      setRepeatDays(repeatDays.filter((d) => d !== dayIndex));
-    } else {
-      setRepeatDays([...repeatDays, dayIndex].sort((a, b) => a - b));
-    }
+    setRepeatDays((currentDays) => (
+      currentDays.includes(dayIndex)
+        ? currentDays.filter((day) => day !== dayIndex)
+        : [...currentDays, dayIndex].sort((a, b) => a - b)
+    ));
   };
 
   // Toggle all days
   const toggleAllDays = () => {
-    if (repeatDays.length === 7) {
-      setRepeatDays([]);
-    } else {
-      setRepeatDays([0, 1, 2, 3, 4, 5, 6]);
-    }
-  };
-
-  // Shift hour
-  const adjustHour = (delta: number) => {
-    let next = (hour + delta) % 12;
-    if (next <= 0) next += 12;
-    setHour(next);
-  };
-
-  // Shift minute
-  const adjustMinute = (delta: number) => {
-    let next = (minute + delta) % 60;
-    if (next < 0) next += 60;
-    setMinute(next);
-  };
-
-  // Helper values for drum roller rows
-  const getPrevHour = (step: number) => {
-    let h = hour - step;
-    while (h <= 0) h += 12;
-    return h;
-  };
-  const getNextHour = (step: number) => {
-    let h = (hour + step) % 12;
-    if (h === 0) h = 12;
-    return h;
-  };
-  const getPrevMinute = (step: number) => {
-    let m = minute - step;
-    while (m < 0) m += 60;
-    return m.toString().padStart(2, '0');
-  };
-  const getNextMinute = (step: number) => {
-    let m = (minute + step) % 60;
-    return m.toString().padStart(2, '0');
+    setRepeatDays((currentDays) => (
+      currentDays.length === 7 ? [] : [0, 1, 2, 3, 4, 5, 6]
+    ));
   };
 
   const handleSave = () => {
@@ -143,7 +378,21 @@ export default function AlarmEditScreen() {
     router.back();
   };
 
-  const isCheckboxChecked = repeatDays.length > 0;
+  const isCheckboxChecked = repeatDays.length === 7;
+
+  const handlePeriodChange = (nextPeriod: 'am' | 'pm') => {
+    if (nextPeriod === period) return;
+    setPeriod(nextPeriod);
+  };
+
+  useEffect(() => {
+    Animated.timing(periodTransition, {
+      toValue: period === 'am' ? 0 : 1,
+      duration: 100,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [period, periodTransition]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -197,142 +446,96 @@ export default function AlarmEditScreen() {
             {/* BEGIN: TimePickerWheelCard */}
             <SurfaceCard style={styles.pickerCard}>
               {/* Sun icon on top right */}
-              <View style={styles.sunIcon}>
-                <Svg
-                  width={28}
-                  height={28}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={colors.sun}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              <Animated.View
+                style={[
+                  styles.sunIcon,
+                  {
+                    transform: [{
+                      rotate: periodTransition.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '18deg'],
+                      }),
+                    }],
+                  },
+                ]}
+              >
+                <Animated.View
+                  style={{
+                    opacity: periodTransition.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 0],
+                    }),
+                  }}
                 >
-                  <Circle cx="12" cy="12" r="4" />
-                  <Path d="M12 2v2" />
-                  <Path d="M12 20v2" />
-                  <Path d="m4.93 4.93 1.41 1.41" />
-                  <Path d="m17.66 17.66 1.41 1.41" />
-                  <Path d="M2 12h2" />
-                  <Path d="M20 12h2" />
-                  <Path d="m6.34 17.66-1.41 1.41" />
-                  <Path d="m19.07 4.93-1.41 1.41" />
-                </Svg>
-              </View>
+                  <Svg
+                    width={28}
+                    height={28}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={colors.sun}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <Circle cx="12" cy="12" r="4" />
+                    <Path d="M12 2v2" />
+                    <Path d="M12 20v2" />
+                    <Path d="m4.93 4.93 1.41 1.41" />
+                    <Path d="m17.66 17.66 1.41 1.41" />
+                    <Path d="M2 12h2" />
+                    <Path d="M20 12h2" />
+                    <Path d="m6.34 17.66-1.41 1.41" />
+                    <Path d="m19.07 4.93-1.41 1.41" />
+                  </Svg>
+                </Animated.View>
+                <Animated.View
+                  style={[
+                    styles.periodIconOverlay,
+                    {
+                      opacity: periodTransition.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 1],
+                      }),
+                    },
+                  ]}
+                >
+                  <Svg
+                    width={28}
+                    height={28}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={colors.sun}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+                  </Svg>
+                </Animated.View>
+              </Animated.View>
 
-              {/* Drum Roller Rows */}
               <View style={styles.rollerContainer}>
-                {/* Row -2: Most Faded */}
-                <View style={styles.rollerRowOuter}>
-                  <Pressable
-                    onPress={() => adjustHour(-2)}
-                    style={styles.colHour}
-                  >
-                    <Text style={styles.rollerTextDim2}>{getPrevHour(2)}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => adjustMinute(-2)}
-                    style={styles.colMinute}
-                  >
-                    <Text style={styles.rollerTextDim2}>
-                      {getPrevMinute(2)}
-                    </Text>
-                  </Pressable>
-                  <View style={styles.colPeriod} />
-                </View>
-
-                {/* Row -1: Medium Faded */}
-                <View style={styles.rollerRowOuter}>
-                  <Pressable
-                    onPress={() => adjustHour(-1)}
-                    style={styles.colHour}
-                  >
-                    <Text style={styles.rollerTextDim1}>{getPrevHour(1)}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => adjustMinute(-1)}
-                    style={styles.colMinute}
-                  >
-                    <Text style={styles.rollerTextDim1}>
-                      {getPrevMinute(1)}
-                    </Text>
-                  </Pressable>
-                  <View style={styles.colPeriod} />
-                </View>
-
-                {/* Active Selected Row (Highlighted pill bar) */}
-                <View style={styles.activePillBar}>
-                  <View style={styles.activeRowInner}>
-                    <Pressable
-                      onPress={() => adjustHour(1)}
-                      style={styles.colHour}
-                    >
-                      <Text style={styles.activeNumber}>{hour}</Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => adjustMinute(1)}
-                      style={styles.colMinute}
-                    >
-                      <Text style={styles.activeNumber}>
-                        {minute.toString().padStart(2, '0')}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() =>
-                        setPeriod(period === 'am' ? 'pm' : 'am')
-                      }
-                      style={styles.colPeriod}
-                    >
-                      <Text style={styles.activePeriod}>{period}</Text>
-                    </Pressable>
-                  </View>
-                </View>
-
-                {/* Row +1: Medium Faded */}
-                <View style={styles.rollerRowOuter}>
-                  <Pressable
-                    onPress={() => adjustHour(1)}
-                    style={styles.colHour}
-                  >
-                    <Text style={styles.rollerTextDim1}>{getNextHour(1)}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => adjustMinute(1)}
-                    style={styles.colMinute}
-                  >
-                    <Text style={styles.rollerTextDim1}>
-                      {getNextMinute(1)}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() =>
-                      setPeriod(period === 'am' ? 'pm' : 'am')
-                    }
-                    style={styles.colPeriod}
-                  >
-                    <Text style={styles.rollerPeriodDim1}>
-                      {period === 'am' ? 'pm' : 'am'}
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {/* Row +2: Most Faded */}
-                <View style={styles.rollerRowOuter}>
-                  <Pressable
-                    onPress={() => adjustHour(2)}
-                    style={styles.colHour}
-                  >
-                    <Text style={styles.rollerTextDim2}>{getNextHour(2)}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => adjustMinute(2)}
-                    style={styles.colMinute}
-                  >
-                    <Text style={styles.rollerTextDim2}>
-                      {getNextMinute(2)}
-                    </Text>
-                  </Pressable>
-                  <View style={styles.colPeriod} />
+                <View style={styles.wheelRow}>
+                  <View pointerEvents="none" style={styles.activePillBar} />
+                  <WheelColumn
+                    values={HOUR_VALUES}
+                    selectedValue={hour}
+                    formatValue={formatHour}
+                    onChange={setHour}
+                    width={80}
+                  />
+                  <WheelColumn
+                    values={MINUTE_VALUES}
+                    selectedValue={minute}
+                    formatValue={formatMinute}
+                    onChange={setMinute}
+                    width={80}
+                  />
+                  <PeriodSelector
+                    value={period}
+                    onChange={handlePeriodChange}
+                    width={64}
+                  />
                 </View>
               </View>
             </SurfaceCard>
@@ -372,31 +575,52 @@ export default function AlarmEditScreen() {
                   </Pressable>
 
                   {/* Terracotta checkbox */}
-                  <Pressable
-                    accessibilityLabel="Select all days"
+                  <View style={[styles.checkbox, isCheckboxChecked && styles.checkboxChecked]}>
+                    <Pressable
+                    accessibilityLabel={isCheckboxChecked ? 'Clear all days' : 'Select all days'}
                     onPress={toggleAllDays}
-                    style={[
-                      styles.checkbox,
-                      isCheckboxChecked && styles.checkboxChecked,
-                    ]}
-                  >
-                    {isCheckboxChecked && (
+                    style={styles.checkboxPressTarget}
+                    >
                       <Svg
                         width={14}
                         height={14}
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="#FFFFFF"
+                        stroke={isCheckboxChecked ? '#FFFFFF' : colors.alarm}
                         strokeWidth={2.5}
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       >
                         <Polyline points="20 6 9 17 4 12" />
                       </Svg>
-                    )}
-                  </Pressable>
+                    </Pressable>
+                  </View>
                 </View>
               </View>
+
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: true }}
+                accessibilityLabel="Tomorrow"
+                onPress={() => setRepeatDays([])}
+                style={styles.tomorrowRow}
+              >
+                <Text style={styles.tomorrowText}>Tomorrow</Text>
+                <View style={[styles.checkbox, styles.checkboxChecked]}>
+                  <Svg
+                    width={14}
+                    height={14}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#FFFFFF"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <Polyline points="20 6 9 17 4 12" />
+                  </Svg>
+                </View>
+              </Pressable>
 
               {/* Day Pills: [S] [M] [T] [W] [T] [F] [S] */}
               <View style={styles.daysGrid}>
@@ -405,6 +629,9 @@ export default function AlarmEditScreen() {
                   return (
                     <Pressable
                       key={idx}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: selected }}
+                      accessibilityLabel={`${DAY_NAMES[idx]} repeat day`}
                       onPress={() => toggleDay(idx)}
                       style={({ pressed }) => [
                         styles.dayPill,
@@ -730,95 +957,155 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   statusSubheader: {
-    alignItems: 'center',
-    marginBottom: 4,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   statusText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    color: colors.secondary,
+    fontFamily: 'Inter_700Bold',
+    fontSize: 22,
+    color: colors.ink,
+    letterSpacing: -0.3,
+    lineHeight: 28,
   },
   pickerCard: {
     position: 'relative',
-    paddingVertical: 20,
+    padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 210,
+    minHeight: 180,
   },
   sunIcon: {
     position: 'absolute',
     top: 14,
     right: 14,
   },
+  periodIconOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
   rollerContainer: {
     width: '100%',
     alignItems: 'center',
-    gap: 4,
+    paddingVertical: 2,
+  },
+  wheelRow: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: ROW_HEIGHT * VISIBLE_ROWS,
+  },
+  wheelColumn: {
+    height: ROW_HEIGHT * VISIBLE_ROWS,
+  },
+  wheelContent: {
+    paddingVertical: ROW_HEIGHT * Math.floor(VISIBLE_ROWS / 2),
+  },
+  periodColumn: {
+    height: ROW_HEIGHT * VISIBLE_ROWS,
+    alignSelf: 'center',
+  },
+  periodContent: {
+    paddingVertical: WHEEL_PADDING,
+  },
+  wheelItem: {
+    height: ROW_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wheelText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 26,
+    color: colors.ink,
+    textAlign: 'center',
+  },
+  periodText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 20,
+    color: colors.ink,
+    textAlign: 'center',
+    textTransform: 'lowercase',
+  },
+  dimPeriodText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 15,
+    color: colors.secondary,
+    opacity: 0.55,
+    textAlign: 'center',
+    textTransform: 'lowercase',
+  },
+  wheelDimText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 16,
+    color: colors.secondary,
+    opacity: 0.42,
   },
   rollerRowOuter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     height: 32,
-    width: '100%',
+    width: '75%',
   },
   activePillBar: {
-    width: '88%',
-    height: 52,
-    borderRadius: radii.pill,
-    backgroundColor: colors.alarmTint,
+    position: 'absolute',
+    top: ROW_HEIGHT * 2 - 4,
+    width: '100%',
+    height: ROW_HEIGHT + 8,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceLow,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 4,
   },
   activeRowInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
+    width: '75%',
   },
   colHour: {
-    width: 70,
-    alignItems: 'flex-end',
-    paddingRight: 10,
+    width: 80,
+    alignItems: 'center',
   },
   colMinute: {
-    width: 70,
-    alignItems: 'flex-start',
-    paddingLeft: 10,
+    width: 80,
+    alignItems: 'center',
   },
   colPeriod: {
-    width: 50,
-    alignItems: 'flex-start',
-    paddingLeft: 8,
+    width: 64,
+    alignItems: 'center',
   },
   rollerTextDim2: {
     fontFamily: 'Inter_400Regular',
-    fontSize: 18,
+    fontSize: 14,
     color: colors.secondary,
     opacity: 0.25,
   },
   rollerTextDim1: {
     fontFamily: 'Inter_500Medium',
-    fontSize: 22,
+    fontSize: 16,
     color: colors.secondary,
     opacity: 0.5,
   },
   rollerPeriodDim1: {
     fontFamily: 'Inter_500Medium',
-    fontSize: 16,
+    fontSize: 14,
     color: colors.secondary,
     opacity: 0.5,
   },
   activeNumber: {
     fontFamily: 'Inter_700Bold',
-    fontSize: 34,
-    color: colors.alarm,
+    fontSize: 30,
+    color: colors.ink,
   },
   activePeriod: {
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Inter_700Bold',
     fontSize: 20,
-    color: colors.alarm,
+    color: colors.ink,
   },
   repeatCard: {
     padding: 16,
@@ -833,6 +1120,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
     color: colors.ink,
+  },
+  tomorrowRow: {
+    minHeight: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  tomorrowText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    color: colors.secondary,
   },
   repeatActions: {
     flexDirection: 'row',
@@ -855,6 +1154,12 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     borderColor: colors.alarm,
     backgroundColor: colors.alarm,
+  },
+  checkboxPressTarget: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   daysGrid: {
     flexDirection: 'row',
