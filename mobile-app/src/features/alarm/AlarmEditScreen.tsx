@@ -328,9 +328,9 @@ export default function AlarmEditScreen() {
   const periodTransition = useRef(new Animated.Value(initial.period === 'am' ? 0 : 1)).current;
   const [repeatDays, setRepeatDays] = useState<number[]>(initial.repeatDays);
   const [name, setName] = useState(initial.name);
-  const [mission, setMission] = useState(initial.mission);
-  // sound, vibration and snooze are read from the reactive store so the badge updates when their screens write to it
-  const { sound, vibration, snooze } = useAlarm();
+  // sound, vibration, snooze and mission are read from the reactive store so
+  // the badge updates when their screens write to it
+  const { sound, vibration, snooze, mission } = useAlarm();
   const [wakeUpCheck, setWakeUpCheck] = useState(initial.wakeUpCheck);
   const [showMemo, setShowMemo] = useState(initial.showMemo);
   const [memo, setMemo] = useState(initial.memo);
@@ -597,31 +597,6 @@ export default function AlarmEditScreen() {
                   </View>
                 </View>
               </View>
-
-              <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: true }}
-                accessibilityLabel="Tomorrow"
-                onPress={() => setRepeatDays([])}
-                style={styles.tomorrowRow}
-              >
-                <Text style={styles.tomorrowText}>Tomorrow</Text>
-                <View style={[styles.checkbox, styles.checkboxChecked]}>
-                  <Svg
-                    width={14}
-                    height={14}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#FFFFFF"
-                    strokeWidth={2.5}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <Polyline points="20 6 9 17 4 12" />
-                  </Svg>
-                </View>
-              </Pressable>
-
               {/* Day Pills: [S] [M] [T] [W] [T] [F] [S] */}
               <View style={styles.daysGrid}>
                 {DAY_LABELS.map((label, idx) => {
@@ -1120,18 +1095,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
     color: colors.ink,
-  },
-  tomorrowRow: {
-    minHeight: 38,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 2,
-  },
-  tomorrowText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    color: colors.secondary,
   },
   repeatActions: {
     flexDirection: 'row',

@@ -18,6 +18,8 @@ import {
 } from '@expo-google-fonts/inter';
 import Svg, { Line, Polyline } from 'react-native-svg';
 import { colors, radii, spacing } from '@/theme/tokens';
+import { useAlarm } from './alarmState';
+import { normalizeMemorySettings } from './memoryMission';
 
 // ---------------------------------------------------------------------------
 // Mission item data type
@@ -120,9 +122,13 @@ export default function MissionScreen() {
   });
 
   const [missionsEnabled, setMissionsEnabled] = useState(true);
-  const [missions] = useState<MissionItem[]>([
-    { id: 'memory', name: 'Memory', count: 5 },
-  ]);
+
+  // Reflect the saved Memory configuration so the list shows the real round count
+  const { memoryQuestions, memoryDifficulty } = useAlarm();
+  const memorySettings = normalizeMemorySettings(memoryQuestions, memoryDifficulty);
+  const missions: MissionItem[] = [
+    { id: 'memory', name: 'Memory', count: memorySettings.questions },
+  ];
 
   if (!fontsLoaded) return null;
 
@@ -174,7 +180,9 @@ export default function MissionScreen() {
             {missions.map((item) => (
               <Pressable
                 key={item.id}
-                accessibilityLabel={`${item.name} mission`}
+                accessibilityLabel={`${item.name} mission, ${item.count} questions`}
+                accessibilityRole="button"
+                onPress={() => router.push('/memory')}
                 style={({ pressed }) => [
                   styles.card,
                   styles.missionItemCard,
@@ -205,6 +213,8 @@ export default function MissionScreen() {
             {/* Add Mission Dashed Button */}
             <Pressable
               accessibilityLabel="Add Mission"
+              accessibilityRole="button"
+              onPress={() => router.push('/mission-add')}
               style={({ pressed }) => [
                 styles.addMissionButton,
                 pressed && styles.addMissionButtonPressed,

@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Memory Mission Settings</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            surface: {
+              DEFAULT: '#FAF9F6',
+              dim: '#DBD9D3',
+              card: '#FFFFFF',
+              border: '#ECEAE4',
+              soft: '#F4F3EF',
+            },
+            brand: {
+              charcoal: '#171715',
+              secondary: '#6F706A',
+              accent: '#F3B328', // Serene Cadence warm amber tone
+              accentLight: '#FDEBB3',
+              flame: '#EE5D32',
+              flameMuted: '#DBD9D3',
+            }
+          },
+          borderRadius: {
+            '3xl': '24px',
+            '4xl': '32px',
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: CustomStyles -->
+<style data-purpose="base-layout">
+    body {
+      background-color: #FAF9F6;
+      color: #171715;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+  </style>
+<style data-purpose="shadows">
+    .card-shadow {
+      box-shadow: 0 4px 24px -2px rgba(23, 23, 21, 0.05), 0 2px 8px -2px rgba(23, 23, 21, 0.02);
+    }
+    .button-press {
+      transition: transform 0.1s ease, background-color 0.15s ease;
+    }
+    .button-press:active {
+      transform: scale(0.96);
+    }
+  </style>
+<!-- END: CustomStyles -->
+</head>
+<body class="min-h-screen bg-surface flex flex-col justify-between items-center text-brand-charcoal antialiased">
+<!-- BEGIN: MobileContainer -->
+<div class="w-full max-w-md min-h-screen flex flex-col justify-between px-5 pt-3 pb-6 relative" data-purpose="screen-wrapper">
+<!-- BEGIN: TopSection -->
+<div class="w-full flex flex-col gap-4">
+<!-- Top Status Bar Spacer for Mobile -->
+<div aria-hidden="true" class="h-1 w-full"></div>
+<!-- BEGIN: NavigationHeader -->
+<header class="flex items-center justify-between py-2" data-purpose="navigation-bar">
+<!-- Back Button -->
+<button aria-label="Go back" class="p-2 -ml-2 rounded-full hover:bg-surface-soft button-press transition-colors" type="button">
+<svg class="w-6 h-6 text-brand-charcoal stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Screen Title -->
+<h1 class="text-lg font-bold tracking-tight text-brand-charcoal">
+          Memory
+        </h1>
+<!-- Preview Action -->
+<button class="text-xs font-bold tracking-wider text-brand-charcoal uppercase px-3 py-1.5 rounded-full hover:bg-surface-soft button-press transition-colors" data-purpose="preview-action" type="button">
+          PREVIEW
+        </button>
+</header>
+<!-- END: NavigationHeader -->
+<!-- BEGIN: PreviewHeroCard -->
+<div class="bg-surface-card border border-surface-border rounded-3xl p-6 card-shadow flex flex-col items-center mt-1" data-purpose="game-preview-card">
+<!-- Fire/Streak Pill Badge -->
+
+<!-- Subtitle -->
+<span class="text-xs font-semibold text-brand-secondary tracking-wide uppercase mb-4" data-purpose="example-label">
+          Example
+        </span>
+<!-- 5x5 Memory Tile Grid -->
+<div class="grid grid-cols-5 gap-2.5 w-full max-w-[216px] aspect-square" data-purpose="memory-grid">
+<!-- Row 1 (all muted) -->
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<!-- Row 2: Col 1 lit (Index 0 of row 2 in standard 1-based, or col 1) -->
+<div class="w-full h-full bg-brand-accent rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<!-- Row 3: Col 3 & 4 lit -->
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-brand-accent rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-brand-accent rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<!-- Row 4: Col 1, 2 & 5 lit -->
+<div class="w-full h-full bg-brand-accent rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-brand-accent rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-brand-accent rounded-lg shadow-sm"></div>
+<!-- Row 5: Col 4 lit -->
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-brand-accent rounded-lg shadow-sm"></div>
+<div class="w-full h-full bg-[#E4E2DC] rounded-lg shadow-sm"></div>
+</div>
+</div>
+<!-- END: PreviewHeroCard -->
+</div>
+<!-- END: TopSection -->
+<!-- BEGIN: SettingsControls -->
+<div class="w-full flex flex-col gap-8 my-6" data-purpose="settings-control-panel">
+<!-- Control 1: Number of Questions -->
+<div class="flex flex-col items-center gap-3" data-purpose="question-count-control">
+<label class="text-sm font-medium text-brand-secondary">
+          Number of Questions
+        </label>
+<div class="flex items-center justify-between w-full max-w-[280px] px-2">
+<!-- Stepper Minus -->
+<button aria-label="Decrease question count" class="w-11 h-11 flex items-center justify-center rounded-full bg-surface-card border border-surface-border text-brand-charcoal button-press hover:bg-surface-soft transition-colors shadow-sm" type="button">
+<svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M19.5 12h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Current Value -->
+<span class="text-4xl font-extrabold text-brand-charcoal tracking-tight select-none">
+            5
+          </span>
+<!-- Stepper Plus -->
+<button aria-label="Increase question count" class="w-11 h-11 flex items-center justify-center rounded-full bg-surface-card border border-surface-border text-brand-charcoal button-press hover:bg-surface-soft transition-colors shadow-sm" type="button">
+<svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+<!-- Control 2: Difficulty Level -->
+<div class="flex flex-col items-center gap-3" data-purpose="difficulty-level-control">
+<label class="text-sm font-medium text-brand-secondary">
+          Difficulty Level
+        </label>
+<div class="flex items-center justify-between w-full max-w-[280px] px-2">
+<!-- Previous Level Caret -->
+<button aria-label="Previous difficulty" class="w-11 h-11 flex items-center justify-center rounded-full bg-transparent hover:bg-surface-soft text-brand-charcoal button-press transition-colors" type="button">
+<svg class="w-6 h-6 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M15.75 19.5L8.25 12l7.5-7.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Current Difficulty Label -->
+<span class="text-2xl font-bold text-brand-charcoal tracking-tight select-none">
+            Normal
+          </span>
+<!-- Next Level Caret -->
+<button aria-label="Next difficulty" class="w-11 h-11 flex items-center justify-center rounded-full bg-transparent hover:bg-surface-soft text-brand-charcoal button-press transition-colors" type="button">
+<svg class="w-6 h-6 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M8.25 4.5l7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+<!-- END: SettingsControls -->
+<!-- BEGIN: BottomActionSection -->
+<footer class="w-full flex flex-col items-center gap-3 pt-2" data-purpose="bottom-bar">
+<!-- Save Button -->
+<button class="w-full py-4 px-6 rounded-2xl bg-brand-charcoal text-white font-bold text-base tracking-wide shadow-md hover:bg-opacity-95 button-press transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-charcoal" data-purpose="save-button" type="button">
+        Save
+      </button>
+<!-- Home Indicator Bar (iOS Style) -->
+<div aria-hidden="true" class="w-32 h-1 bg-surface-dim rounded-full mt-2 opacity-60"></div>
+</footer>
+<!-- END: BottomActionSection -->
+</div>
+<!-- END: MobileContainer -->
+
+
+</body></html>

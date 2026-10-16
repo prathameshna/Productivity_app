@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { clampMemoryQuestions, DEFAULT_MEMORY_QUESTIONS } from './memoryMission';
 
 export interface AlarmData {
   id: string;
@@ -11,6 +12,10 @@ export interface AlarmData {
   sound: string;
   vibration: string;
   snooze: string;
+  // Memory mission configuration (optional so alarms persisted before
+  // this feature existed keep loading cleanly)
+  memoryQuestions?: number;
+  memoryDifficulty?: string;
   wakeUpCheck: boolean;
   showMemo: boolean;
   memo: string;
@@ -28,6 +33,8 @@ export const defaultAlarmTemplate: AlarmData = {
   sound: 'Skyblue',
   vibration: 'Basic',
   snooze: '5 minutes, forever',
+  memoryQuestions: DEFAULT_MEMORY_QUESTIONS,
+  memoryDifficulty: 'Normal',
   wakeUpCheck: false,
   showMemo: true,
   memo: '',
@@ -46,6 +53,8 @@ const initialAlarms: AlarmData[] = [
     sound: 'Skyblue',
     vibration: 'Basic',
     snooze: '5 minutes, forever',
+    memoryQuestions: DEFAULT_MEMORY_QUESTIONS,
+    memoryDifficulty: 'Normal',
     wakeUpCheck: false,
     showMemo: true,
     memo: '',
@@ -62,6 +71,8 @@ const initialAlarms: AlarmData[] = [
     sound: 'Skyblue',
     vibration: 'Basic',
     snooze: '5 minutes, forever',
+    memoryQuestions: DEFAULT_MEMORY_QUESTIONS,
+    memoryDifficulty: 'Normal',
     wakeUpCheck: false,
     showMemo: true,
     memo: '',
@@ -112,6 +123,16 @@ export function saveAlarmsToStorage() {
   }
 }
 
+function normalizeLoadedAlarms(loaded: AlarmData[]): AlarmData[] {
+  return loaded.map((a) => ({
+    ...a,
+    memoryQuestions:
+      typeof a.memoryQuestions === 'number'
+        ? clampMemoryQuestions(a.memoryQuestions)
+        : DEFAULT_MEMORY_QUESTIONS,
+  }));
+}
+
 export function loadAlarmsFromStorage() {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -119,7 +140,7 @@ export function loadAlarmsFromStorage() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          alarms = parsed;
+          alarms = normalizeLoadedAlarms(parsed);
           if (alarms.length > 0) {
             activeEditingAlarmId = alarms[0].id;
             activeEditingAlarm = { ...alarms[0] };
@@ -145,7 +166,7 @@ export function loadAlarmsFromStorage() {
           FileSystem.readAsStringAsync(fileUri).then((content: string) => {
             const parsed = JSON.parse(content);
             if (Array.isArray(parsed)) {
-              alarms = parsed;
+              alarms = normalizeLoadedAlarms(parsed);
               if (alarms.length > 0) {
                 activeEditingAlarmId = alarms[0].id;
                 activeEditingAlarm = { ...alarms[0] };
