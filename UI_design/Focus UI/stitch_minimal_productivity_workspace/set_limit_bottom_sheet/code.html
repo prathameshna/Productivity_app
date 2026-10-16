@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set Limit - YouTube</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #E8E7E3;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    .tap-active:active {
+      transform: scale(0.97);
+      transition: transform 0.1s ease;
+    }
+  </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 m-0">
+
+  <!-- Mobile Frame (390 x 844) -->
+  <div class="relative w-[390px] h-[844px] bg-[#000000]/40 flex flex-col justify-end overflow-hidden shadow-2xl rounded-[44px] border-[6px] border-[#222]">
+    
+    <!-- Dimmed Background Content Preview -->
+    <div class="absolute inset-0 bg-[#F5F4F1] p-5 opacity-40 pointer-events-none">
+      <div class="pt-6 flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-extrabold text-[#080808]">Block apps</h1>
+      </div>
+      <div class="bg-white rounded-2xl h-64 p-4 border border-[#E7E6E2]"></div>
+    </div>
+
+    <!-- Backdrop Dim -->
+    <div class="absolute inset-0 bg-black/35 backdrop-blur-[2px]"></div>
+
+    <!-- Bottom Sheet Container (Rounded 28px) -->
+    <div class="relative w-full bg-white rounded-t-[28px] border-t border-[#E7E6E2] shadow-2xl z-20 flex flex-col max-h-[82%] overflow-hidden animate-slide-up">
+      
+      <!-- Drag Handle -->
+      <div class="w-full flex justify-center pt-3 pb-2 cursor-grab">
+        <div class="w-10 h-1 bg-[#D1CFCA] rounded-full"></div>
+      </div>
+
+      <!-- Sheet Header: App Logo, Name, Usage -->
+      <div class="px-6 py-2 flex items-center justify-between border-b border-[#F5F4F1]">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-12 h-12 rounded-[14px] bg-[#FF0000]/10 flex items-center justify-center text-[#FF0000] border border-[#FF0000]/20">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-lg font-extrabold text-[#080808]">YouTube</h2>
+            <p class="text-xs font-medium text-[#71716D]">Usage today: 1h 40m</p>
+          </div>
+        </div>
+        <button class="w-8 h-8 rounded-full bg-[#F5F4F1] flex items-center justify-center text-[#71716D] tap-active">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Controls Content (Scrollable if needed) -->
+      <div class="px-6 py-4 overflow-y-auto space-y-4">
+
+        <!-- Row: Daily limit Stepper -->
+        <div class="bg-[#FBFBFA] rounded-[20px] p-4 border border-[#E7E6E2] flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-bold text-[#080808]">Daily limit</h4>
+            <p class="text-xs text-[#71716D]">Time allowed per day</p>
+          </div>
+          <div class="flex items-center space-x-2.5">
+            <button class="w-8 h-8 rounded-full bg-white border border-[#E7E6E2] text-[#080808] font-bold text-base flex items-center justify-center shadow-sm tap-active">-</button>
+            <span class="text-sm font-extrabold text-[#080808] min-w-[65px] text-center">1h 00m</span>
+            <button class="w-8 h-8 rounded-full bg-white border border-[#E7E6E2] text-[#080808] font-bold text-base flex items-center justify-center shadow-sm tap-active">+</button>
+          </div>
+        </div>
+
+        <!-- Row: Emergency uses (range 0-5) -->
+        <div class="bg-[#FBFBFA] rounded-[20px] p-4 border border-[#E7E6E2] flex flex-col space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-bold text-[#080808]">Emergency uses</h4>
+            <div class="flex items-center space-x-2.5">
+              <button class="w-8 h-8 rounded-full bg-white border border-[#E7E6E2] text-[#080808] font-bold text-base flex items-center justify-center shadow-sm tap-active">-</button>
+              <span class="text-sm font-extrabold text-[#080808] min-w-[28px] text-center">2</span>
+              <button class="w-8 h-8 rounded-full bg-white border border-[#E7E6E2] text-[#080808] font-bold text-base flex items-center justify-center shadow-sm tap-active">+</button>
+            </div>
+          </div>
+          <p class="text-[11px] text-[#71716D]">Times you can open the app after the limit is reached</p>
+        </div>
+
+        <!-- Row: Remind me before limit -->
+        <div class="bg-[#FBFBFA] rounded-[20px] p-4 border border-[#E7E6E2] flex flex-col space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-sm font-bold text-[#080808]">Remind me before limit</h4>
+              <p class="text-xs text-[#71716D]">Get a gentle heads up</p>
+            </div>
+            <!-- Toggle (Active) -->
+            <div class="w-12 h-7 bg-[#080808] rounded-full p-1 cursor-pointer flex items-center justify-end">
+              <div class="w-5 h-5 bg-white rounded-full shadow-sm"></div>
+            </div>
+          </div>
+          <!-- Chips for 5, 10, 15 min -->
+          <div class="flex items-center space-x-2 pt-1">
+            <button class="px-3 py-1 rounded-full text-xs font-semibold bg-white border border-[#E7E6E2] text-[#71716D] shadow-2xs">5 min</button>
+            <button class="px-3 py-1 rounded-full text-xs font-bold bg-[#080808] text-white shadow-sm">10 min</button>
+            <button class="px-3 py-1 rounded-full text-xs font-semibold bg-white border border-[#E7E6E2] text-[#71716D] shadow-2xs">15 min</button>
+          </div>
+        </div>
+
+        <!-- Row: Strict mode with Pro badge -->
+        <div class="bg-[#FBFBFA] rounded-[20px] p-4 border border-[#E7E6E2] flex flex-col space-y-1.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <h4 class="text-sm font-bold text-[#080808]">Strict mode</h4>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#EAE8E3] text-[#080808] uppercase tracking-wider">Pro</span>
+            </div>
+            <!-- Toggle (Inactive) -->
+            <div class="w-12 h-7 bg-[#E7E6E2] rounded-full p-1 cursor-pointer flex items-center">
+              <div class="w-5 h-5 bg-white rounded-full shadow-sm"></div>
+            </div>
+          </div>
+          <p class="text-[11px] text-[#71716D]">You can't open the app once the limit is reached</p>
+        </div>
+
+        <!-- Section: Block specific features (Pro) -->
+        <div class="bg-[#FBFBFA] rounded-[20px] p-4 border border-[#E7E6E2] flex flex-col space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <h4 class="text-sm font-bold text-[#080808]">Block specific features</h4>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#EAE8E3] text-[#080808] uppercase tracking-wider">Pro</span>
+            </div>
+          </div>
+          <!-- Toggle row for YouTube Shorts -->
+          <div class="flex items-center justify-between pt-1">
+            <div>
+              <span class="text-sm font-semibold text-[#080808]">Shorts</span>
+              <p class="text-[11px] text-[#71716D]">Block short-form video feed only</p>
+            </div>
+            <!-- Toggle Active -->
+            <div class="w-12 h-7 bg-[#080808] rounded-full p-1 cursor-pointer flex items-center justify-end">
+              <div class="w-5 h-5 bg-white rounded-full shadow-sm"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Action Buttons -->
+      <div class="px-6 pt-2 pb-6 border-t border-[#F5F4F1] flex flex-col space-y-2">
+        <button class="w-full py-3.5 bg-[#080808] text-white rounded-full font-bold text-sm shadow-md tap-active hover:bg-neutral-800 text-center">
+          Add
+        </button>
+        <button class="w-full py-2 text-[#71716D] font-semibold text-sm tap-active text-center">
+          Cancel
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="focus_accessibility_label">Focus app blocking</string>
+  <string name="focus_accessibility_description">Focus uses this service to detect when an app you chose to limit opens, to count the time you spend in it, and to show your block screen when the daily limit is reached. It also reads the address bar of supported browsers to enforce blocked websites. Focus does not collect or upload any of this data; everything stays on your device.</string>
+  <string name="focus_watcher_channel_name">Focus blocking</string>
+  <string name="focus_watcher_channel_description">Keeps daily app limits accurate while a blocked app is open.</string>
+  <string name="focus_watcher_notification_title">Focus is watching your limits</string>
+  <string name="focus_watcher_notification_text">Time left is tracked while a blocked app is open.</string>
+  <string name="focus_reminder_channel_name">Focus reminders</string>
+  <string name="focus_reminder_channel_description">Alerts you before an app reaches its daily limit.</string>
+</resources>

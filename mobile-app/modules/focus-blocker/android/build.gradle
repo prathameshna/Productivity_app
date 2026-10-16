@@ -1,0 +1,15 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = "com.productivity.app"
+version = "1.0.0"
+
+android {
+  namespace "expo.modules.focusblocker"
+}
+
+dependencies {
+  api "androidx.annotation:annotation:1.0.0"
+}

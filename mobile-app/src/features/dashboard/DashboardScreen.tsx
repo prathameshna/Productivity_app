@@ -26,12 +26,18 @@ export default function DashboardScreen() {
   const handleCardPress = (label: string) => {
     if (label === 'Alarm') {
       router.push('/alarm');
+    } else if (label === 'Focus') {
+      router.push('/focus');
     }
   };
 
   const handleNavPress = (label: string) => {
     if (label === 'Alarm') {
       router.push('/alarm');
+      return;
+    }
+    if (label === 'Focus') {
+      router.push('/focus');
       return;
     }
     setActiveTab(label);
