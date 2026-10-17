@@ -14,7 +14,7 @@ import java.util.Calendar
 object UsageRepository {
 
   fun todaySeconds(context: Context, packageName: String): Long =
-    windowSeconds(context, setOf(packageName), startOfTodayMillis(), System.currentTimeMillis())[packageName] ?: 0L
+    (windowSeconds(context, setOf(packageName), startOfTodayMillis(), System.currentTimeMillis())[packageName] ?: 0L) / 1000L
 
   fun startOfTodayMillis(): Long {
     val calendar = Calendar.getInstance().apply {
@@ -29,7 +29,7 @@ object UsageRepository {
   /** Seconds in the foreground today (local midnight -> now), keyed by package. */
   fun todaySecondsJson(context: Context, packages: Collection<String>): String {
     val totals = windowSeconds(context, packages.toSet(), startOfTodayMillis(), System.currentTimeMillis())
-    return toJson(totals)
+    return toJson(totals.mapValues { (_, millis) -> millis / 1000L })
   }
 
   fun todayMillisJson(context: Context, packages: Collection<String>): String {
@@ -42,7 +42,7 @@ object UsageRepository {
     val todayStart = startOfTodayMillis()
     val windowStart = todayStart - 7L * 24 * 60 * 60 * 1000
     val totals = windowSeconds(context, packages.toSet(), windowStart, todayStart)
-    return toJson(totals.mapValues { (_, seconds) -> seconds / 7L })
+    return toJson(totals.mapValues { (_, millis) -> millis / 1000L / 7L })
   }
 
   private fun toJson(totals: Map<String, Long>): String {

@@ -68,7 +68,7 @@ class FocusWatcherService : Service() {
 
   private fun enforceLimit(pkg: String) {
     val rule = RulesStore.appRule(this, pkg)?.takeIf { it.enabled } ?: return
-    if (UsageRepository.todaySeconds(this, pkg) < rule.dailyLimitMin * 60L) return
+    if (foregroundUsageSeconds(pkg) < rule.dailyLimitMin * 60L) return
     if (RulesStore.graceRemaining(this, pkg) > 0L) return
     val now = android.os.SystemClock.elapsedRealtime()
     if (lastBlockedPackage == pkg && now - lastBlockedAt < REBLOCK_DELAY_MS) return
@@ -92,6 +92,9 @@ class FocusWatcherService : Service() {
     private const val REBLOCK_DELAY_MS = 1500L
     @Volatile private var currentForegroundPackage: String? = null
     @Volatile private var watcherStarted = false
+    @Volatile private var foregroundStartedAt = 0L
+    @Volatile private var foregroundBaseSeconds = 0L
+    @Volatile private var foregroundDate = ""
 
     fun start(context: Context) {
       val shouldRun = RulesStore.rules(context)?.apps?.any { it.enabled } == true
@@ -112,8 +115,25 @@ class FocusWatcherService : Service() {
     }
 
     fun updateForeground(context: Context, packageName: String) {
-      currentForegroundPackage = packageName
+      synchronized(this) {
+        if (currentForegroundPackage != packageName || foregroundDate != RulesStore.today()) {
+          currentForegroundPackage = packageName
+          foregroundBaseSeconds = if (packageName == context.packageName) 0L else UsageRepository.todaySeconds(context, packageName)
+          foregroundStartedAt = android.os.SystemClock.elapsedRealtime()
+          foregroundDate = RulesStore.today()
+        }
+      }
       start(context)
+    }
+
+    fun foregroundUsageSeconds(packageName: String): Long = synchronized(this) {
+      if (currentForegroundPackage != packageName) return@synchronized 0L
+      if (foregroundDate != RulesStore.today()) {
+        foregroundDate = RulesStore.today()
+        foregroundBaseSeconds = 0L
+        foregroundStartedAt = android.os.SystemClock.elapsedRealtime()
+      }
+      foregroundBaseSeconds + (android.os.SystemClock.elapsedRealtime() - foregroundStartedAt) / 1000L
     }
   }
 }
