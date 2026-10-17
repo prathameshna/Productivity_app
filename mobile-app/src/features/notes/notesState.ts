@@ -18,11 +18,11 @@ export type NotesStorageStatus = 'loading' | 'ready' | 'error';
 const STORAGE_KEY = '@productivity/sticky_notes';
 const FILE_NAME = 'productivity_sticky_notes.json';
 const initialNotes: Note[] = [
-  { id: 'sample-urgent', title: '*URGENT JOB OPENING - SUPPORT ENGINEER*', content: '', category: 'Work', color: 'parchment', createdAt: '2026-10-17T20:24:00.000Z', updatedAt: '2026-10-17T20:24:00.000Z' },
-  { id: 'sample-links', title: '', content: 'Hejwuehehehehehege\nbeghttps://youtube\n.com/shorts/X\n_iqUWjaKkY?si=\nryAx504NSMH6yt5J\nwww.godaddy.com', category: 'Bookmark', color: 'parchment', createdAt: '2026-10-17T19:58:00.000Z', updatedAt: '2026-10-17T19:58:00.000Z' },
-  { id: 'sample-gfff', title: 'Gfff', content: '', category: 'Home', color: 'parchment', createdAt: '2026-10-17T20:01:00.000Z', updatedAt: '2026-10-17T20:01:00.000Z' },
-  { id: 'sample-journal', title: 'b 🌤️ Daily Journal', content: '✨ Today’s Highlight\n\n😊 How I Feel', category: 'Home', color: 'parchment', createdAt: '2026-10-17T19:58:00.000Z', updatedAt: '2026-10-17T19:58:00.000Z' },
-  { id: 'sample-heiehe', title: 'Heiehe', content: '', category: 'Work', color: 'parchment', createdAt: '2026-10-17T19:58:00.000Z', updatedAt: '2026-10-17T19:58:00.000Z' },
+  { id: 'sample-urgent', title: '*URGENT JOB OPENING - SUPPORT ENGINEER*', content: '', category: 'Work', color: 'parchment', createdAt: '2026-10-17T14:54:00.000Z', updatedAt: '2026-10-17T14:54:00.000Z' },
+  { id: 'sample-links', title: '', content: 'Hejwuehehehehehege\nbeghttps://youtube\n.com/shorts/X\n_iqUWjaKkY?si=\nryAx504NSMH6yt5J\nwww.godaddy.com', category: 'Home', color: 'parchment', createdAt: '2026-10-17T14:28:00.000Z', updatedAt: '2026-10-17T14:28:00.000Z' },
+  { id: 'sample-gfff', title: 'Gfff', content: '', category: 'Home', color: 'parchment', createdAt: '2026-10-17T14:31:00.000Z', updatedAt: '2026-10-17T14:31:00.000Z' },
+  { id: 'sample-journal', title: 'b 🌤️ Daily Journal', content: '✨ Today’s Highlight\n\n😊 How I Feel', category: 'Home', color: 'parchment', createdAt: '2026-10-17T14:28:00.000Z', updatedAt: '2026-10-17T14:28:00.000Z' },
+  { id: 'sample-heiehe', title: 'Heiehe', content: '', category: 'Work', color: 'parchment', createdAt: '2026-10-17T14:28:00.000Z', updatedAt: '2026-10-17T14:28:00.000Z' },
 ];
 
 let notes: Note[] = [];
@@ -93,9 +93,10 @@ const loadPromise = (async () => {
 })();
 
 let pendingWrite = Promise.resolve();
+let mutationQueue = Promise.resolve();
 async function persist(next: Note[]): Promise<void> {
   await loadPromise;
-  pendingWrite = pendingWrite.then(() => writeStorage(JSON.stringify(next)));
+  pendingWrite = pendingWrite.catch(() => undefined).then(() => writeStorage(JSON.stringify(next)));
   try {
     await pendingWrite;
     notes = next;
@@ -105,6 +106,15 @@ async function persist(next: Note[]): Promise<void> {
     setStorageStatus('error', error instanceof Error ? error.message : 'Notes could not be saved.');
     throw error;
   }
+}
+
+function mutateNotes(mutator: (current: Note[]) => Note[]): Promise<void> {
+  const operation = mutationQueue.catch(() => undefined).then(async () => {
+    await loadPromise;
+    await persist(mutator(notes));
+  });
+  mutationQueue = operation.then(() => undefined, () => undefined);
+  return operation;
 }
 
 export function getNotes(): Note[] { return notes; }
@@ -117,20 +127,17 @@ export function useNotesStorageStatus() { return useSyncExternalStore(subscribeN
 export function useNotesStorageError() { return useSyncExternalStore(subscribeNotesStorage, getNotesStorageError, getNotesStorageError); }
 
 export async function createNote(fields: Partial<Pick<Note, 'title' | 'content' | 'category' | 'color'>> = {}): Promise<Note> {
-  await loadPromise;
   const timestamp = new Date().toISOString();
   const note: Note = { id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title: fields.title ?? '', content: fields.content ?? '', category: fields.category ?? 'Home', color: fields.color ?? 'parchment', createdAt: timestamp, updatedAt: timestamp };
-  await persist([note, ...notes]);
+  await mutateNotes((current) => [note, ...current]);
   return note;
 }
 
 export async function updateNote(id: string, patch: Partial<Pick<Note, 'title' | 'content' | 'category' | 'color'>>): Promise<void> {
-  await loadPromise;
   const timestamp = new Date().toISOString();
-  await persist(notes.map((note) => note.id === id ? { ...note, ...patch, updatedAt: timestamp } : note));
+  await mutateNotes((current) => current.map((note) => note.id === id ? { ...note, ...patch, updatedAt: timestamp } : note));
 }
 
 export async function deleteNote(id: string): Promise<void> {
-  await loadPromise;
-  await persist(notes.filter((note) => note.id !== id));
+  await mutateNotes((current) => current.filter((note) => note.id !== id));
 }
