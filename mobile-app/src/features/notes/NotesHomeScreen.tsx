@@ -127,8 +127,8 @@ export default function NotesHomeScreen() {
         <View style={styles.listArea}>
           {storageStatus === 'loading' ? <View style={styles.centerState}><Text style={styles.stateText} maxFontSizeMultiplier={1.15}>Loading your notes…</Text></View> : visibleNotes.length === 0 ? <View style={styles.centerState}><Text style={styles.emptyTitle} maxFontSizeMultiplier={1.15}>No notes here yet</Text><Text style={styles.stateText} maxFontSizeMultiplier={1.15}>Create a note to get started.</Text></View> : (
             <View style={styles.columns}>
-              <FlatList ref={leftList} data={columns.left} keyExtractor={columnKey} renderItem={renderCard} contentContainerStyle={leftContentStyle} windowSize={5} initialNumToRender={6} maxToRenderPerBatch={8} updateCellsBatchingPeriod={40} removeClippedSubviews={Platform.OS === 'android'} scrollEventThrottle={16} onScroll={(event) => onScroll('left', event)} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" />
-              {layout === 'grid' ? <FlatList ref={rightList} data={columns.right} keyExtractor={columnKey} renderItem={renderCard} contentContainerStyle={rightContentStyle} windowSize={5} initialNumToRender={6} maxToRenderPerBatch={8} updateCellsBatchingPeriod={40} removeClippedSubviews={Platform.OS === 'android'} scrollEventThrottle={16} onScroll={(event) => onScroll('right', event)} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" /> : null}
+              <FlatList ref={leftList} style={styles.columnList} data={columns.left} keyExtractor={columnKey} renderItem={renderCard} contentContainerStyle={leftContentStyle} windowSize={5} initialNumToRender={6} maxToRenderPerBatch={8} updateCellsBatchingPeriod={40} removeClippedSubviews={Platform.OS === 'android'} scrollEventThrottle={16} onScroll={(event) => onScroll('left', event)} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" />
+              {layout === 'grid' ? <FlatList ref={rightList} style={styles.columnList} data={columns.right} keyExtractor={columnKey} renderItem={renderCard} contentContainerStyle={rightContentStyle} windowSize={5} initialNumToRender={6} maxToRenderPerBatch={8} updateCellsBatchingPeriod={40} removeClippedSubviews={Platform.OS === 'android'} scrollEventThrottle={16} onScroll={(event) => onScroll('right', event)} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" /> : null}
             </View>
           )}
         </View>
@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
   errorText: { color: notesColors.error, fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12 },
   listArea: { flex: 1 },
   columns: { flex: 1, flexDirection: 'row' },
+  columnList: { flex: 1 },
   centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   emptyTitle: { color: notesColors.ink, fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 18 },
   stateText: { color: notesColors.muted, fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13, textAlign: 'center', marginTop: 8 },
