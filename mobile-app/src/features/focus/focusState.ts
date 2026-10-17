@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { syncRulesToNative } from './focusNative';
+import { focusBlockingService } from '../../services/focusBlockingService';
 
 export interface FocusBlockedApp {
   packageName: string;
@@ -31,15 +31,30 @@ const today = () => {
 const defaults = (): FocusState => ({ blockedApps: [], blockedSites: [], blocksFiredToday: 0, lastResetDate: today() });
 let state = defaults();
 const listeners = new Set<() => void>();
+let syncError: string | null = null;
+const syncErrorListeners = new Set<() => void>();
 
 function emit() { listeners.forEach((listener) => listener()); }
+function setSyncError(message: string | null) {
+  if (syncError === message) return;
+  syncError = message;
+  syncErrorListeners.forEach((listener) => listener());
+}
 export function getFocusState() { return state; }
 export function subscribeFocus(listener: () => void) { listeners.add(listener); return () => listeners.delete(listener); }
 export function useFocusState() { return useSyncExternalStore(subscribeFocus, getFocusState, getFocusState); }
+export function getFocusSyncError() { return syncError; }
+export function subscribeFocusSyncError(listener: () => void) { syncErrorListeners.add(listener); return () => syncErrorListeners.delete(listener); }
+export function useFocusSyncError() { return useSyncExternalStore(subscribeFocusSyncError, getFocusSyncError, getFocusSyncError); }
 
 export function saveFocusState(next: FocusState) {
   state = next;
-  syncRulesToNative(state);
+  try {
+    focusBlockingService.applyRules(state);
+    setSyncError(null);
+  } catch (error) {
+    setSyncError(error instanceof Error ? error.message : 'Focus rules could not be saved to native storage.');
+  }
   try {
     if (typeof window !== 'undefined' && window.localStorage) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch { /* Storage can be unavailable in embedded web views. */ }
@@ -81,6 +96,15 @@ export function removeBlockedSite(domain: string) {
 }
 
 function normalize(value: Partial<FocusState>): FocusState {
+  const loadedDate = typeof value.lastResetDate === 'string' ? value.lastResetDate : '';
+  if (loadedDate !== today()) {
+    return {
+      blockedApps: Array.isArray(value.blockedApps) ? value.blockedApps.map((app) => ({ ...app, emergencyUsedToday: 0, spentTodayMin: 0 })) : [],
+      blockedSites: Array.isArray(value.blockedSites) ? value.blockedSites : [],
+      blocksFiredToday: 0,
+      lastResetDate: today(),
+    };
+  }
   return {
     blockedApps: Array.isArray(value.blockedApps) ? value.blockedApps : [],
     blockedSites: Array.isArray(value.blockedSites) ? value.blockedSites : [],
@@ -93,7 +117,7 @@ export function loadFocusState() {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) { state = normalize(JSON.parse(stored)); emit(); return; }
+      if (stored) { state = normalize(JSON.parse(stored)); try { focusBlockingService.applyRules(state); setSyncError(null); } catch (error) { setSyncError(error instanceof Error ? error.message : 'Focus rules could not be restored to native storage.'); } emit(); return; }
     }
   } catch { /* Fall through to native file storage or defaults. */ }
   try {
@@ -102,7 +126,7 @@ export function loadFocusState() {
       const uri = `${FileSystem.documentDirectory}productivity_focus.json`;
       FileSystem.getInfoAsync(uri).then((info: { exists: boolean }) => {
         if (!info.exists) return;
-        return FileSystem.readAsStringAsync(uri).then((content: string) => { state = normalize(JSON.parse(content)); emit(); });
+        return FileSystem.readAsStringAsync(uri).then((content: string) => { state = normalize(JSON.parse(content)); try { focusBlockingService.applyRules(state); setSyncError(null); } catch (error) { setSyncError(error instanceof Error ? error.message : 'Focus rules could not be restored to native storage.'); } emit(); });
       }).catch(() => {});
     }
   } catch { /* A new install starts with defaults. */ }

@@ -1,9 +1,9 @@
 package expo.modules.focusblocker
 
-import android.content.Intent
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.content.Intent
+import android.os.Build
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import org.json.JSONArray
@@ -32,6 +32,21 @@ class FocusBlockerModule : Module() {
       UsageRepository.todaySecondsJson(context, parsePackages(packagesJson))
     }
 
+    AsyncFunction("getUsageTodayMs") { packagesJson: String ->
+      val context = appContext.reactContext ?: return@AsyncFunction "{}"
+      UsageRepository.todayMillisJson(context, parsePackages(packagesJson))
+    }
+
+    AsyncFunction("hasUsageAccess") {
+      val context = appContext.reactContext ?: return@AsyncFunction false
+      Permissions.hasUsageAccess(context)
+    }
+
+    AsyncFunction("openUsageAccessSettings") {
+      val context = appContext.reactContext ?: return@AsyncFunction null
+      Permissions.openSettings(context, Permissions.KIND_USAGE)
+    }
+
     AsyncFunction("getUsage7dAverages") { packagesJson: String ->
       val context = appContext.reactContext ?: return@AsyncFunction "{}"
       UsageRepository.previous7DayAverageSecondsJson(context, parsePackages(packagesJson))
@@ -43,7 +58,7 @@ class FocusBlockerModule : Module() {
     }
 
     AsyncFunction("openPermissionSettings") { kind: String ->
-      val context = appContext.reactContext ?: return@AsyncFunction
+      val context = appContext.reactContext ?: return@AsyncFunction null
       Handler(Looper.getMainLooper()).post {
         Permissions.openSettings(context, kind)
       }
@@ -55,7 +70,7 @@ class FocusBlockerModule : Module() {
     }
 
     AsyncFunction("clearIconCache") {
-      val context = appContext.reactContext ?: return@AsyncFunction
+      val context = appContext.reactContext ?: return@AsyncFunction null
       AppRepository.clearIconCache(context)
     }
 
@@ -64,15 +79,16 @@ class FocusBlockerModule : Module() {
     Function("syncRules") { json: String ->
       val context = appContext.reactContext
       if (context != null && json.isNotBlank()) {
-        RulesStore.writeRules(context, json)
-        val watcherIntent = Intent(context, FocusWatcherService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-          context.startForegroundService(watcherIntent)
-        } else {
-          context.startService(watcherIntent)
+        try {
+          RulesStore.writeRules(context, json)
+        } catch (_: Exception) {
+          return@Function false
         }
+        val hasEnabledApps = RulesStore.rules(context)?.apps?.any { it.enabled } == true
+        if (hasEnabledApps) FocusWatcherService.start(context)
+        else context.stopService(Intent(context, FocusWatcherService::class.java))
       }
-      true
+      context != null
     }
   }
 

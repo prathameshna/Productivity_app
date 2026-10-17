@@ -8,7 +8,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   AlarmClock,
@@ -25,16 +25,9 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { navItems } from '@/features/dashboard/dashboardData';
 import avatarImage from '@/assests/raw/avtar.png';
 import { focusColors as c } from '@/theme/focusTokens';
-import { getFocusState, updateFocusState, useFocusState } from './focusState';
-import {
-  fetchAppIcon,
-  fetchNativeCounters,
-  fetchPermissionStates,
-  fetchUsageToday,
-  openPermissionSettings,
-  type FocusPermissionKind,
-  type FocusPermissionStates,
-} from './focusNative';
+import { getFocusState, updateFocusState, useFocusState, useFocusSyncError } from './focusState';
+import type { FocusPermissionKind, FocusPermissionStates } from './focusNative';
+import { focusBlockingService } from '../../services/focusBlockingService';
 import { blockedFeatureTags } from './blockingFeatures';
 
 const navIcons = {
@@ -48,8 +41,11 @@ export default function FocusHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const focus = useFocusState();
+  const focusSyncError = useFocusSyncError();
   const [infoOpen, setInfoOpen] = useState(false);
   const [permissions, setPermissions] = useState<FocusPermissionStates | null>(null);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [usageError, setUsageError] = useState<string | null>(null);
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
@@ -59,30 +55,61 @@ export default function FocusHomeScreen() {
   });
 
   const refreshUsage = useCallback(async () => {
+    if (!focusBlockingService.getCapabilities().appUsage) return;
     const current = getFocusState();
-    const usage = await fetchUsageToday(current.blockedApps.map((app) => app.packageName));
+    let usage: Record<string, number>;
+    try {
+      usage = await focusBlockingService.getUsageToday(current.blockedApps.map((app) => app.packageName));
+      setUsageError(null);
+    } catch (error) {
+      setUsageError(error instanceof Error ? error.message : 'Unable to read app usage.');
+      return;
+    }
     updateFocusState({
       blockedApps: current.blockedApps.map((app) => ({
         ...app,
         spentTodayMin: Math.floor((usage[app.packageName] ?? app.spentTodayMin * 60) / 60),
       })),
     });
-    const counters = await fetchNativeCounters();
-    if (counters && counters.date === current.lastResetDate) {
-      updateFocusState({ blocksFiredToday: counters.blocksFired });
+    const counters = await focusBlockingService.getCounters().catch((error) => {
+      setUsageError(error instanceof Error ? error.message : 'Focus counters could not be read.');
+      return null;
+    });
+    if (counters) {
+      const latest = getFocusState();
+      const sameDay = counters.date === latest.lastResetDate;
+      updateFocusState({
+        blocksFiredToday: sameDay ? counters.blocksFired : 0,
+        lastResetDate: counters.date,
+        blockedApps: latest.blockedApps.map((app) => ({
+          ...app,
+          emergencyUsedToday: sameDay ? counters.emergencyUsed[app.packageName] ?? 0 : 0,
+        })),
+      });
     }
   }, []);
 
   useEffect(() => {
     void refreshUsage();
-    void fetchPermissionStates().then(setPermissions);
+    void focusBlockingService.checkPermissions().then((value) => { setPermissions(value); setPermissionError(null); }).catch((error) => {
+      setPermissionError(error instanceof Error ? error.message : 'Focus permission status could not be read.');
+    });
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active') {
+        void focusBlockingService.checkPermissions().then((value) => { setPermissions(value); setPermissionError(null); }).catch((error) => {
+          setPermissionError(error instanceof Error ? error.message : 'Focus permission status could not be read.');
+        });
+        void refreshUsage();
+      }
+    });
     const timer = setInterval(() => void refreshUsage(), 30_000);
-    return () => clearInterval(timer);
+    return () => { clearInterval(timer); subscription.remove(); };
   }, [refreshUsage]);
 
   if (!fontsLoaded) return null;
 
   const blockedApps = focus.blockedApps;
+  const permissionsReady = permissions !== null && Object.values(permissions).every(Boolean);
   const activeApps = blockedApps.filter((app) => app.enabled);
   const usedMin = activeApps.reduce((total, app) => total + app.spentTodayMin, 0);
   const limitMin = activeApps.reduce((total, app) => total + app.dailyLimitMin, 0);
@@ -124,15 +151,21 @@ export default function FocusHomeScreen() {
           </Pressable>
         </View>
 
+        {permissionError && <Text accessibilityRole="alert" style={styles.permissionBannerText}>{permissionError}</Text>}
         {missingPermission && (
           <Pressable
-            onPress={() => openPermissionSettings(missingPermission)}
+            onPress={() => { void focusBlockingService.requestPermissions(missingPermission).catch((error) => setPermissionError(error instanceof Error ? error.message : 'Android settings could not be opened.')); }}
             style={styles.permissionBanner}
           >
             <Text style={styles.permissionBannerTitle}>Focus permissions need attention</Text>
             <Text style={styles.permissionBannerText}>Tap to open the next missing Android permission.</Text>
           </Pressable>
         )}
+        {!focusBlockingService.getCapabilities().dailyLimits && (
+          <Text style={styles.permissionBannerText}>App blocking is unavailable in this build. Android requires a development build; iOS requires the Screen Time integration.</Text>
+        )}
+        {usageError && <Text accessibilityRole="alert" style={styles.permissionBannerText}>{usageError}</Text>}
+        {focusSyncError && <Text accessibilityRole="alert" style={styles.permissionBannerText}>{focusSyncError}</Text>}
 
         <View style={styles.hero}>
           <View style={styles.ringContainer}>
@@ -183,7 +216,7 @@ export default function FocusHomeScreen() {
             </View>
             <View style={styles.appList}>
               {blockedApps.map((app) => (
-                <AppCard key={app.packageName} app={app} onPress={addApps} />
+                <AppCard key={app.packageName} app={app} onPress={addApps} permissionsReady={permissionsReady} />
               ))}
             </View>
           </>
@@ -243,10 +276,10 @@ function StatCard({ icon, value, label }: { icon: 'phone' | 'time' | 'blocks'; v
   );
 }
 
-function AppCard({ app, onPress }: { app: ReturnType<typeof useFocusState>['blockedApps'][number]; onPress: () => void }) {
+function AppCard({ app, onPress, permissionsReady }: { app: ReturnType<typeof useFocusState>['blockedApps'][number]; onPress: () => void; permissionsReady: boolean }) {
   const reached = app.enabled && app.spentTodayMin >= app.dailyLimitMin;
   const paused = !app.enabled;
-  const status = paused ? 'Paused' : reached ? 'Limit reached' : 'Blocking';
+  const status = paused ? 'Paused' : !permissionsReady ? 'Setup needed' : reached ? 'Limit reached' : 'Blocking';
   const left = Math.max(0, app.dailyLimitMin - app.spentTodayMin);
   const progress = app.dailyLimitMin > 0 ? Math.min(1, app.spentTodayMin / app.dailyLimitMin) : 0;
   const spentColor = reached ? c.reachedText : c.secondary;
@@ -263,7 +296,7 @@ function AppCard({ app, onPress }: { app: ReturnType<typeof useFocusState>['bloc
             <Text maxFontSizeMultiplier={1.15} style={styles.leftMeta}>{formatMinutes(left)} left</Text>
           </View>
         </View>
-        <Text maxFontSizeMultiplier={1.15} numberOfLines={1} style={[styles.statusPill, paused ? styles.statusPaused : reached ? styles.statusReached : styles.statusBlocking]}>{status}</Text>
+        <Text maxFontSizeMultiplier={1.15} numberOfLines={1} style={[styles.statusPill, paused || !permissionsReady ? styles.statusPaused : reached ? styles.statusReached : styles.statusBlocking]}>{status}</Text>
       </View>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: paused ? '#A8A7A1' : reached ? '#D32F2F' : c.accent }]} />
@@ -282,7 +315,7 @@ function AppIcon({ packageName, label }: { packageName: string; label: string })
   const [icon, setIcon] = useState<string | null>(null);
   useEffect(() => {
     let mounted = true;
-    void fetchAppIcon(packageName).then((value) => { if (mounted) setIcon(value); });
+    void focusBlockingService.getAppIcon(packageName).then((value) => { if (mounted) setIcon(value); }).catch(() => { if (mounted) setIcon(null); });
     return () => { mounted = false; };
   }, [packageName]);
   return icon

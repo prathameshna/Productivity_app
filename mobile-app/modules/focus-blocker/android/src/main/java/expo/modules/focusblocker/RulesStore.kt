@@ -91,7 +91,7 @@ object RulesStore {
         editor.remove(key)
       }
     }
-    editor.apply()
+    check(editor.commit()) { "Unable to durably write Focus rules." }
   }
 
   /** Persists the rules JSON written by JS. Never drops native counters for the same day. */
@@ -122,12 +122,30 @@ object RulesStore {
     } catch (_: Exception) {
       // Malformed payload: keep whatever counters native already has.
     }
-    editor.apply()
+    editor.commit()
     cachedRaw = null
     cachedRules = null
   }
 
   fun readRaw(context: Context): String? = prefs(context).getString(KEY_RULES, null)
+
+  @Synchronized
+  fun removeUninstalledApp(context: Context, packageName: String) {
+    val raw = readRaw(context) ?: return
+    try {
+      val root = JSONObject(raw)
+      val apps = root.optJSONArray("apps") ?: return
+      val remaining = JSONArray()
+      for (index in 0 until apps.length()) {
+        val app = apps.optJSONObject(index) ?: continue
+        if (app.optString("packageName") != packageName) remaining.put(app)
+      }
+      root.put("apps", remaining)
+      writeRules(context, root.toString())
+    } catch (_: Exception) {
+      // Invalid saved data is left for the next successful JS rule sync to replace.
+    }
+  }
 
   fun rules(context: Context): FocusRules? {
     ensureToday(context)
@@ -154,7 +172,7 @@ object RulesStore {
     ensureToday(context)
     val prefs = prefs(context)
     val next = prefs.getInt(KEY_BLOCKS, 0) + 1
-    prefs.edit().putInt(KEY_BLOCKS, next).apply()
+      prefs.edit().putInt(KEY_BLOCKS, next).apply()
     return next
   }
 
@@ -175,7 +193,7 @@ object RulesStore {
     try {
       val json = JSONObject(prefs.getString(KEY_EMERGENCY, "{}") ?: "{}")
       json.put(packageName, used)
-      prefs.edit().putString(KEY_EMERGENCY, json.toString()).apply()
+      check(prefs.edit().putString(KEY_EMERGENCY, json.toString()).commit())
     } catch (_: Exception) {
       // Ignore: counter stays at previous value.
     }
@@ -193,7 +211,7 @@ object RulesStore {
     ensureToday(context)
     prefs(context).edit()
       .putLong(KEY_GRACE_PREFIX + packageName, System.currentTimeMillis() + durationMs)
-      .apply()
+      .commit()
   }
 
   /** Returns true the first time a reminder key is claimed for the given day. */
@@ -202,8 +220,13 @@ object RulesStore {
     val key = KEY_REMINDED_PREFIX + today() + "_" + packageName
     val prefs = prefs(context)
     if (prefs.getBoolean(key, false)) return false
-    prefs.edit().putBoolean(key, true).apply()
+    prefs.edit().putBoolean(key, true).commit()
     return true
+  }
+
+  fun releaseReminder(context: Context, packageName: String) {
+    val key = KEY_REMINDED_PREFIX + today() + "_" + packageName
+    prefs(context).edit().remove(key).commit()
   }
 
   /** Counters the JS layer needs so its UI matches what happened while it was closed. */

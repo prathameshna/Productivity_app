@@ -118,7 +118,7 @@ object Permissions {
     startOrFallback(context, primary) {
       when (kind) {
         // Some OEMs refuse the direct battery-exemption request: open the list instead.
-        KIND_BATTERY -> Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATIONS_SETTINGS)
+        KIND_BATTERY -> Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
         else -> Intent(
           Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
           Uri.parse("package:$packageName")

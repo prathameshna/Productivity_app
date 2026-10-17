@@ -36,64 +36,58 @@ const native: FocusBlockerNativeModule | null =
 export const hasNativeFocus: boolean = native !== null;
 export const isAndroid: boolean = Platform.OS === 'android';
 
-async function safe<T>(work: () => Promise<T>, fallback: T): Promise<T> {
-  if (!native) return fallback;
-  try {
-    return await work();
-  } catch {
-    return fallback;
-  }
-}
-
 function parseJson<T>(raw: string, fallback: T): T {
   if (!raw) return fallback;
   try {
     return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
+  } catch (error) {
+    throw new Error('Focus native storage returned invalid data.', { cause: error });
   }
 }
 
-export function fetchInstalledApps(): Promise<InstalledApp[]> {
-  return safe(
-    async () => parseJson<InstalledApp[]>((await native!.getInstalledApps()) ?? '[]', []),
-    []
-  );
+export async function fetchInstalledApps(): Promise<InstalledApp[]> {
+  if (!native) return [];
+  return parseJson<InstalledApp[]>((await native.getInstalledApps()) ?? '[]', []);
 }
 
 /** Base64 PNG of the app's real launcher icon, or null when unavailable. */
 export async function fetchAppIcon(packageName: string): Promise<string | null> {
-  const encoded = await safe(async () => (await native!.getAppIcon(packageName)) ?? '', '');
+  if (!native) return null;
+  const encoded = (await native.getAppIcon(packageName)) ?? '';
   return encoded ? encoded : null;
 }
 
 /** Seconds in the foreground since local midnight, keyed by package. */
 export function fetchUsageToday(packages: string[]): Promise<Record<string, number>> {
-  return safe(
-    async () =>
-      parseJson<Record<string, number>>(
-        (await native!.getUsageToday(JSON.stringify(packages))) ?? '{}',
-        {}
-      ),
-    {}
-  );
+  if (!native) return Promise.reject(new Error('Focus usage is unavailable in this build.'));
+  return native.getUsageToday(JSON.stringify(packages)).then((raw) => parseJson<Record<string, number>>(raw ?? '{}', {}));
+}
+
+export function hasUsageAccess(): Promise<boolean> {
+  if (!native) return Promise.resolve(false);
+  return native.hasUsageAccess();
+}
+
+export function openUsageAccessSettings(): Promise<void> {
+  if (!native) return Promise.reject(new Error('Android usage settings are unavailable in this build.'));
+  return native.openUsageAccessSettings();
+}
+
+export function fetchUsageTodayMs(packages: string[]): Promise<Record<string, number>> {
+  if (!native) return Promise.reject(new Error('Focus usage is unavailable in this build.'));
+  return native.getUsageTodayMs(JSON.stringify(packages)).then((raw) => parseJson<Record<string, number>>(raw ?? '{}', {}));
 }
 
 /** Average daily seconds over the previous 7 days, keyed by package. */
 export function fetchUsage7dAverages(packages: string[]): Promise<Record<string, number>> {
-  return safe(
-    async () =>
-      parseJson<Record<string, number>>(
-        (await native!.getUsage7dAverages(JSON.stringify(packages))) ?? '{}',
-        {}
-      ),
-    {}
-  );
+  if (!native) return Promise.reject(new Error('Focus usage is unavailable in this build.'));
+  return native.getUsage7dAverages(JSON.stringify(packages)).then((raw) => parseJson<Record<string, number>>(raw ?? '{}', {}));
 }
 
 /** null when unsupported (iOS / Expo Go) so the UI can show its own state. */
 export async function fetchPermissionStates(): Promise<FocusPermissionStates | null> {
-  const raw = await safe(async () => (await native!.getPermissionStates()) ?? '', '');
+  if (!native) return null;
+  const raw = (await native.getPermissionStates()) ?? '';
   if (!raw) return null;
   const parsed = parseJson<Partial<FocusPermissionStates>>(raw, {});
   return {
@@ -105,16 +99,14 @@ export async function fetchPermissionStates(): Promise<FocusPermissionStates | n
   };
 }
 
-export function openPermissionSettings(kind: FocusPermissionKind): void {
-  if (!native) return;
-  native.openPermissionSettings(kind).catch(() => {
-    // Settings page unavailable on this device: the checklist simply stays unchecked.
-  });
+export function openPermissionSettings(kind: FocusPermissionKind): Promise<void> {
+  if (!native) return Promise.reject(new Error('Android permission settings are unavailable in this build.'));
+  return native.openPermissionSettings(kind);
 }
 
 /** Mirrors focusState to SharedPreferences so blocking keeps working with JS closed. */
-export function syncRulesToNative(state: unknown): void {
-  if (!native) return;
+export function syncRulesToNative(state: unknown): boolean {
+  if (!native) return false;
   try {
     const source = state as {
       blockedApps?: Array<Record<string, unknown>>;
@@ -122,7 +114,7 @@ export function syncRulesToNative(state: unknown): void {
       blocksFiredToday?: number;
       lastResetDate?: string;
     };
-    native.syncRules(JSON.stringify({
+    return native.syncRules(JSON.stringify({
       apps: source.blockedApps ?? [],
       sites: (source.blockedSites ?? []).map((domain) => ({
         domain,
@@ -137,13 +129,12 @@ export function syncRulesToNative(state: unknown): void {
         blocksFiredToday: source.blocksFiredToday ?? 0,
       },
     }));
-  } catch {
-    // Never let a persistence failure break the UI.
-  }
+  } catch { return false; }
 }
 
 export async function fetchNativeCounters(): Promise<NativeFocusCounters | null> {
-  const raw = await safe(async () => (await native!.getNativeCounters()) ?? '', '');
+  if (!native) return null;
+  const raw = (await native.getNativeCounters()) ?? '';
   if (!raw) return null;
   const parsed = parseJson<Partial<NativeFocusCounters>>(raw, {});
   return {

@@ -4,6 +4,9 @@ export interface FocusBlockerNativeModule {
   getInstalledApps(): Promise<string>;
   getAppIcon(packageName: string): Promise<string>;
   getUsageToday(packagesJson: string): Promise<string>;
+  getUsageTodayMs(packagesJson: string): Promise<string>;
+  hasUsageAccess(): Promise<boolean>;
+  openUsageAccessSettings(): Promise<void>;
   getUsage7dAverages(packagesJson: string): Promise<string>;
   getPermissionStates(): Promise<string>;
   openPermissionSettings(kind: string): Promise<void>;

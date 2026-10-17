@@ -22,7 +22,12 @@
   <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
   <application>
-    <!-- Detects the foreground app / reads browser URL bars and feature screens. -->
+    <activity
+      android:name="expo.modules.focusblocker.FocusBlockActivity"
+      android:excludeFromRecents="true"
+      android:exported="false"
+      android:launchMode="singleTop"
+      android:theme="@android:style/Theme.Material.Light.NoActionBar" />
     <service
       android:name="expo.modules.focusblocker.FocusAccessibilityService"
       android:exported="true"
@@ -34,18 +39,14 @@
         android:name="android.accessibilityservice"
         android:resource="@xml/focus_accessibility_service" />
     </service>
-
-    <!-- Keeps exact-minute limit checks and reminders alive while a blocked app is open. -->
     <service
       android:name="expo.modules.focusblocker.FocusWatcherService"
       android:exported="false"
       android:foregroundServiceType="specialUse">
       <property
         android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-        android:value="Tracks foreground usage of apps the user chose to limit, so the user-set daily screen time limit and reminders trigger while those apps are open." />
+        android:value="Tracks foreground usage of apps the user chose to limit, so the user-set daily screen time limit and reminders trigger while the app is open." />
     </service>
-
-    <!-- Daily reset across midnight, reboot and timezone changes. -->
     <receiver
       android:name="expo.modules.focusblocker.FocusResetReceiver"
       android:exported="true">
@@ -53,6 +54,10 @@
         <action android:name="android.intent.action.BOOT_COMPLETED" />
         <action android:name="android.intent.action.TIME_SET" />
         <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
+        <data android:scheme="package" />
       </intent-filter>
     </receiver>
   </application>

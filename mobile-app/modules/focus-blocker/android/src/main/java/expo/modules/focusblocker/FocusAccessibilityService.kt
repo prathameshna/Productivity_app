@@ -1,12 +1,14 @@
 package expo.modules.focusblocker
 
 import android.accessibilityservice.AccessibilityService
-import android.app.Activity
 import android.content.Intent
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.Toast
+import android.content.Context
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 
 /**
  * Fail-open foreground guard. It only acts on rules explicitly saved by JS and
@@ -16,25 +18,72 @@ class FocusAccessibilityService : AccessibilityService() {
   private var lastBlockedPackage: String? = null
   private var lastBlockedAt = 0L
 
+  override fun onServiceConnected() {
+    super.onServiceConnected()
+    FocusWatcherService.start(this)
+  }
+
   override fun onAccessibilityEvent(event: AccessibilityEvent?) {
     val currentPackage = event?.packageName?.toString() ?: return
+    FocusWatcherService.updateForeground(this, currentPackage)
     if (currentPackage == packageName) return
     val rules = RulesStore.rules(this) ?: return
     val rule = rules.apps.firstOrNull { it.packageName == currentPackage && it.enabled }
     val usageSeconds = UsageRepository.todaySeconds(this, currentPackage)
-    val appBlocked = rule != null &&
-      usageSeconds >= rule.dailyLimitMin * 60L &&
-      RulesStore.graceRemaining(this, currentPackage) == 0L
+    if (rule != null && rule.enabled) maybeNotifyBeforeLimit(rule, usageSeconds)
     val featureBlocked = rule != null && featureIsBlocked(event, rules, currentPackage, rule)
     val websiteBlocked = browserDomainIsBlocked(event, rules)
-    if ((appBlocked || featureBlocked || websiteBlocked) && shouldBlock(currentPackage)) {
+    if ((featureBlocked || websiteBlocked) && shouldBlock(currentPackage)) {
       RulesStore.incrementBlocksFired(this)
-      Toast.makeText(this, "Focus blocked this app or feature", Toast.LENGTH_SHORT).show()
       performGlobalAction(GLOBAL_ACTION_HOME)
     }
   }
 
   override fun onInterrupt() = Unit
+
+  private fun maybeNotifyBeforeLimit(rule: AppRule, usageSeconds: Long) {
+    if (!rule.remindEnabled || rule.remindMin <= 0) return
+    val limit = rule.dailyLimitMin * 60L
+    val reminderAt = limit - rule.remindMin * 60L
+    if (usageSeconds < reminderAt || usageSeconds >= limit) return
+    try {
+      val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+      if (!androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()) return
+      val channelId = "focus_reminders"
+      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        manager.createNotificationChannel(
+          NotificationChannel(channelId, getString(R.string.focus_reminder_channel_name), NotificationManager.IMPORTANCE_DEFAULT).apply {
+            description = getString(R.string.focus_reminder_channel_description)
+          },
+        )
+      }
+      val notification = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        Notification.Builder(this, channelId)
+          .setSmallIcon(android.R.drawable.ic_dialog_info)
+          .setContentTitle("Approaching your ${rule.label} limit")
+          .setContentText("${rule.remindMin} minutes remain in today's allowance.")
+          .setAutoCancel(true)
+          .build()
+      } else {
+        @Suppress("DEPRECATION")
+        Notification.Builder(this)
+          .setSmallIcon(android.R.drawable.ic_dialog_info)
+          .setContentTitle("Approaching your ${rule.label} limit")
+          .setContentText("${rule.remindMin} minutes remain in today's allowance.")
+          .setAutoCancel(true)
+          .build()
+      }
+      if (!RulesStore.claimReminder(this, rule.packageName)) return
+      try {
+        manager.notify(rule.packageName.hashCode(), notification)
+      } catch (error: Exception) {
+        RulesStore.releaseReminder(this, rule.packageName)
+        throw error
+      }
+    } catch (_: Exception) {
+      // Notification permission and OEM restrictions are reported by the permission gate.
+    }
+  }
 
   private fun shouldBlock(packageName: String): Boolean {
     val now = SystemClock.elapsedRealtime()

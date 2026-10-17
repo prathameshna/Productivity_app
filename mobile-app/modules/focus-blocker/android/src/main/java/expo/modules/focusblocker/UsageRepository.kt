@@ -32,6 +32,11 @@ object UsageRepository {
     return toJson(totals)
   }
 
+  fun todayMillisJson(context: Context, packages: Collection<String>): String {
+    val totals = windowSeconds(context, packages.toSet(), startOfTodayMillis(), System.currentTimeMillis())
+    return toJson(totals.mapValues { (_, millis) -> millis })
+  }
+
   /** Average daily seconds over the 7 whole days before today, keyed by package. */
   fun previous7DayAverageSecondsJson(context: Context, packages: Collection<String>): String {
     val todayStart = startOfTodayMillis()
@@ -72,11 +77,11 @@ object UsageRepository {
       val pkg = event.packageName ?: continue
       if (pkg !in packages) continue
       when (event.eventType) {
-        UsageEvents.Event.MOVE_TO_FOREGROUND -> openSince[pkg] = event.time
+        UsageEvents.Event.MOVE_TO_FOREGROUND -> openSince[pkg] = event.timeStamp
         UsageEvents.Event.MOVE_TO_BACKGROUND -> {
           val began = openSince.remove(pkg)
-          if (began != null && event.time > began) {
-            totals[pkg] = (totals[pkg] ?: 0L) + (event.time - began)
+          if (began != null && event.timeStamp > began) {
+            totals[pkg] = (totals[pkg] ?: 0L) + (event.timeStamp - began)
           }
         }
       }
