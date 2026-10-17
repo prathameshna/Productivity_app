@@ -28,6 +28,8 @@ export default function DashboardScreen() {
       router.push('/alarm');
     } else if (label === 'Focus') {
       router.push('/focus');
+    } else if (label === 'Notes') {
+      router.push('/notes');
     }
   };
 
@@ -69,7 +71,7 @@ export default function DashboardScreen() {
             const Icon = icons[card.icon];
             const displayValue = card.label === 'Alarm' ? formatAlarmTime(alarm.hour, alarm.minute, alarm.period) : card.value;
             const displayDetail = card.label === 'Alarm' ? (alarm.enabled ? 'Gentle Wake • Enabled' : 'Disabled') : card.detail;
-            return <Pressable key={card.label} onPress={() => handleCardPress(card.label)} style={({ pressed }) => [styles.feature, pressed && styles.pressed]}>
+            return <Pressable key={card.label} onPress={() => handleCardPress(card.label)} accessibilityRole="button" accessibilityLabel={`Open ${card.label}`} style={({ pressed }) => [styles.feature, pressed && styles.pressed]}>
               <View style={styles.featureTop}><View style={[styles.iconBox, { backgroundColor: card.tint }]}><Icon size={19} color={card.accent} strokeWidth={2.2} /></View><Text style={styles.muted}>{card.label}</Text></View>
               <View><Text style={styles.featureValue}>{displayValue}</Text><Text style={styles.featureDetail} numberOfLines={1}><View style={[styles.smallDot, { backgroundColor: card.accent }]} />{displayDetail}</Text></View>
             </Pressable>;
