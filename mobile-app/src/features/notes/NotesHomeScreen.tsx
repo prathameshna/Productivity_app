@@ -2,7 +2,6 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans';
 import { CalendarDays, EllipsisVertical, Grid2X2Plus, List, Menu, Plus, Search, X } from 'lucide-react-native';
 import { notesColors, notesRadii } from '@/theme/notesTokens';
 import { NoteCard } from './NoteCard';
@@ -20,7 +19,6 @@ export default function NotesHomeScreen() {
   const notes = useNotes();
   const storageStatus = useNotesStorageStatus();
   const storageError = getNotesStorageError();
-  const [fontsLoaded] = useFonts({ PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold });
   const [category, setCategory] = useState<(typeof categories)[number]>('All');
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -74,8 +72,6 @@ export default function NotesHomeScreen() {
     ]);
   }, []);
 
-  if (!fontsLoaded) return <View style={styles.loadingScreen}><Text style={styles.loadingText} maxFontSizeMultiplier={1.15}>Loading notes…</Text></View>;
-
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -84,7 +80,6 @@ export default function NotesHomeScreen() {
             {menuOpen ? <X size={24} color={notesColors.ink} /> : <Menu size={24} color={notesColors.ink} />}
             <View style={styles.notificationDot} />
           </Pressable>
-          <View style={styles.promoPill}><Text style={styles.promoText} maxFontSizeMultiplier={1.15}>−50%</Text></View>
           <View style={styles.actions}>
             <Pressable accessibilityRole="button" accessibilityLabel={searchOpen ? 'Close search' : 'Search notes'} onPress={toggleSearch} style={styles.iconButton}>
               {searchOpen ? <X size={22} color={notesColors.ink} /> : <Search size={22} color={notesColors.ink} />}
@@ -125,7 +120,7 @@ export default function NotesHomeScreen() {
         {storageStatus === 'error' ? <View accessibilityRole="alert" style={styles.errorBanner}><Text style={styles.errorText} maxFontSizeMultiplier={1.15}>Notes storage issue: {storageError ?? 'Your notes may not be saved.'}</Text></View> : null}
 
         <View style={styles.listArea}>
-          {storageStatus === 'loading' ? <View style={styles.centerState}><Text style={styles.stateText} maxFontSizeMultiplier={1.15}>Loading your notes…</Text></View> : visibleNotes.length === 0 ? <View style={styles.centerState}><Text style={styles.emptyTitle} maxFontSizeMultiplier={1.15}>{notes.length === 0 ? 'No notes yet' : query || calendarTodayOnly || category !== 'All' ? 'No matching notes' : 'Nothing to show here'}</Text><Text style={styles.stateText} maxFontSizeMultiplier={1.15}>{notes.length === 0 ? 'Create a note to get started.' : 'Try another folder or search.'}</Text></View> : (
+          {visibleNotes.length === 0 ? <View style={styles.centerState}><Text style={styles.emptyTitle} maxFontSizeMultiplier={1.15}>{notes.length === 0 ? 'No notes yet' : query || calendarTodayOnly || category !== 'All' ? 'No matching notes' : 'Nothing to show here'}</Text><Text style={styles.stateText} maxFontSizeMultiplier={1.15}>{notes.length === 0 ? 'Create a note to get started.' : 'Try another folder or search.'}</Text></View> : (
             <View style={styles.columns}>
               <FlatList ref={leftList} style={styles.columnList} data={columns.left} keyExtractor={columnKey} renderItem={renderCard} contentContainerStyle={leftContentStyle} windowSize={5} initialNumToRender={6} maxToRenderPerBatch={8} updateCellsBatchingPeriod={40} removeClippedSubviews={Platform.OS === 'android'} scrollEventThrottle={16} onScroll={(event) => onScroll('left', event)} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" />
               {layout === 'grid' ? <FlatList ref={rightList} style={styles.columnList} data={columns.right} keyExtractor={columnKey} renderItem={renderCard} contentContainerStyle={rightContentStyle} windowSize={5} initialNumToRender={6} maxToRenderPerBatch={8} updateCellsBatchingPeriod={40} removeClippedSubviews={Platform.OS === 'android'} scrollEventThrottle={16} onScroll={(event) => onScroll('right', event)} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" /> : null}
@@ -136,7 +131,6 @@ export default function NotesHomeScreen() {
         <Pressable accessibilityRole="button" accessibilityLabel="Create new note" onPress={createNote} style={({ pressed }) => [styles.fab, { bottom: 66 + insets.bottom }, pressed && styles.fabPressed]}>
           <Plus size={29} color="#FFFFFF" strokeWidth={2.5} />
         </Pressable>
-        <View style={[styles.bottomBanner, { paddingBottom: Math.max(insets.bottom, 0) }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -145,13 +139,9 @@ export default function NotesHomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: notesColors.background },
   screen: { flex: 1, backgroundColor: notesColors.background },
-  loadingScreen: { flex: 1, backgroundColor: notesColors.background, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: notesColors.muted, fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14 },
   header: { height: 68, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   iconButton: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
   notificationDot: { position: 'absolute', width: 10, height: 10, borderRadius: 5, backgroundColor: '#FA5A55', top: 8, right: 7, borderWidth: 1, borderColor: notesColors.background },
-  promoPill: { width: 84, height: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FF9D00', borderRadius: 20 },
-  promoText: { color: '#FFFFFF', fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   calendarButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   calendarDay: { position: 'absolute', top: 21, color: notesColors.ink, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 8 },
@@ -181,5 +171,4 @@ const styles = StyleSheet.create({
   stateText: { color: notesColors.muted, fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13, textAlign: 'center', marginTop: 8 },
   fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: notesColors.blueDeep, alignItems: 'center', justifyContent: 'center', shadowColor: '#0091FF', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.26, shadowRadius: 17, elevation: 8, zIndex: 8 },
   fabPressed: { opacity: 0.88, transform: [{ scale: 0.96 }] },
-  bottomBanner: { height: 52, backgroundColor: '#080808' },
 });

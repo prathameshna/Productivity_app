@@ -1,0 +1,265 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Notes - Serene Cadence</title>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            surface: {
+              page: '#FAF9F6',
+              card: '#FFFBF2',
+              cardBorder: '#F2ECE1',
+              subtle: '#F4F2EC'
+            },
+            cadence: {
+              primary: '#171715',
+              secondary: '#6F706A',
+              accent: '#029CFE',
+              warmGold: '#F59E0B'
+            }
+          },
+          boxShadow: {
+            'soft-card': '0 2px 8px -2px rgba(24, 23, 21, 0.04), 0 1px 3px -1px rgba(24, 23, 21, 0.03)',
+            'fab-glow': '0 10px 25px -3px rgba(2, 156, 254, 0.45), 0 4px 6px -4px rgba(2, 156, 254, 0.2)'
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scroll-and-resets">
+    /* Hide scrollbars for clean mobile app experience */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    body {
+      background-color: #FAF9F6;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-[#FAF9F6] text-[#171715] min-h-screen flex justify-center selection:bg-sky-100 antialiased">
+<!-- Mobile Viewport Container -->
+<div class="w-full max-w-[430px] min-h-screen flex flex-col relative bg-[#FAF9F6] overflow-x-hidden border-x border-[#ECEAE4]/60" data-purpose="mobile-viewport">
+<!-- BEGIN: TopStatusBar -->
+
+<!-- END: TopStatusBar -->
+<!-- BEGIN: AppHeader -->
+<header class="px-4 py-2.5 flex items-center justify-between" data-purpose="app-navigation-bar">
+<!-- Left: Hamburger Menu with notification dot -->
+<div class="relative flex items-center">
+<button aria-label="Open menu" class="p-1.5 text-neutral-800 hover:text-black rounded-lg transition-colors" type="button">
+<svg class="w-6 h-6 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
+<line x1="3" x2="21" y1="6" y2="6"></line>
+<line x1="3" x2="21" y1="12" y2="12"></line>
+<line x1="3" x2="16" y1="18" y2="18"></line>
+</svg>
+</button>
+<!-- Red Notification Dot -->
+<span class="absolute top-1 left-5 w-2 h-2 rounded-full bg-[#FA5A55] ring-2 ring-[#FAF9F6]"></span>
+</div>
+<!-- Center: -50% Promo Coupon Pill Button -->
+<div data-purpose="promo-pill">
+
+</div>
+<!-- Right: Action Icons (Search, Calendar, More Menu) -->
+<div class="flex items-center gap-1 text-[#222]">
+<!-- Search Icon -->
+<button aria-label="Search notes" class="p-2 hover:bg-neutral-200/50 rounded-full transition-colors" type="button">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<line x1="20" x2="16" y1="20" y2="16"></line>
+</svg>
+</button>
+<!-- Calendar Icon with Day 17 -->
+<button aria-label="Calendar view" class="p-1.5 hover:bg-neutral-200/50 rounded-lg transition-colors flex items-center justify-center" type="button">
+<div class="w-[22px] h-[22px] border-[1.8px] border-[#222] rounded-[5px] flex flex-col overflow-hidden">
+<div class="h-2 bg-[#222] w-full flex items-center justify-center gap-1 px-1">
+<span class="w-0.5 h-0.5 bg-white rounded-full"></span>
+<span class="w-0.5 h-0.5 bg-white rounded-full"></span>
+</div>
+<div class="flex-1 bg-white flex items-center justify-center">
+<span class="text-[9px] font-bold text-[#171715] leading-none">17</span>
+</div>
+</div>
+</button>
+<!-- Vertical Dots Overflow Menu -->
+<button aria-label="More options" class="p-2 hover:bg-neutral-200/50 rounded-full transition-colors" type="button">
+<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+<circle cx="12" cy="5" r="1.8"></circle>
+<circle cx="12" cy="12" r="1.8"></circle>
+<circle cx="12" cy="19" r="1.8"></circle>
+</svg>
+</button>
+</div>
+</header>
+<!-- END: AppHeader -->
+<!-- BEGIN: FilterPills -->
+<section class="px-4 py-2 flex items-center justify-between" data-purpose="category-filters">
+<!-- Horizontal Tag Pills List -->
+<nav aria-label="Folders and Tags" class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+<!-- Active Tab: All -->
+<button class="px-5 py-2 rounded-full bg-[#029CFE] text-white font-medium text-xs tracking-tight shadow-sm hover:brightness-105 transition-all" type="button">
+          All
+        </button>
+<!-- Inactive Tab: Home -->
+<button class="px-5 py-2 rounded-full bg-[#EBE8DF]/75 text-[#62635D] font-medium text-xs tracking-tight hover:bg-[#E2DFD6] transition-all" type="button">
+          Bookmark</button>
+<!-- Inactive Tab: Work -->
+<button class="px-5 py-2 rounded-full bg-[#EBE8DF]/75 text-[#62635D] font-medium text-xs tracking-tight hover:bg-[#E2DFD6] transition-all" type="button">
+          Reminder</button>
+</nav>
+<!-- Layout Toggle: 2x2 Grid Icon with Plus -->
+<button aria-label="Change layout view" class="p-2 text-[#767770] hover:text-[#171715] transition-colors flex items-center justify-center" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+<rect height="7" rx="1.5" width="7" x="3" y="3"></rect>
+<rect height="7" rx="1.5" width="7" x="14" y="3"></rect>
+<rect height="7" rx="1.5" width="7" x="3" y="14"></rect>
+<path d="M17.5 14v6m-3-3h6" stroke-linecap="round"></path>
+</svg>
+</button>
+</section>
+<!-- END: FilterPills -->
+<!-- BEGIN: NotesMasonryGrid -->
+<main class="flex-1 px-3.5 pt-2 pb-24" data-purpose="notes-masonry-container">
+<div class="grid grid-cols-2 gap-3 items-start">
+<!-- Left Column -->
+<div class="flex flex-col gap-3">
+<!-- Card 1: Job Opening Document Note -->
+<article class="bg-[#FFFBF0] rounded-2xl p-3 border border-[#F3ECE0] shadow-soft-card flex flex-col justify-between hover:border-[#E8DFD1] transition-all cursor-pointer" data-purpose="note-card-urgent-job">
+<!-- Embedded Snippet of Document Scan / Paper -->
+<div class="relative w-full rounded-xl overflow-hidden mb-2.5 border border-stone-200/70 bg-stone-100 shadow-inner">
+<div class="w-full h-24 bg-gradient-to-b from-[#FAF8F5] to-[#EDE7DF] p-2 flex flex-col justify-between select-none">
+<div class="space-y-1">
+<div class="h-1.5 bg-neutral-400/40 rounded w-4/5"></div>
+<div class="h-1 bg-neutral-300/60 rounded w-11/12"></div>
+<div class="h-1 bg-neutral-300/60 rounded w-3/4"></div>
+<div class="h-1 bg-neutral-300/50 rounded w-2/3"></div>
+<div class="h-1 bg-neutral-300/50 rounded w-5/6"></div>
+</div>
+<div class="border-t border-dashed border-stone-300/80 pt-1 space-y-0.5">
+<div class="h-1 bg-neutral-400/50 rounded w-1/2"></div>
+<div class="h-1 bg-neutral-300/50 rounded w-4/5"></div>
+</div>
+</div>
+</div>
+<!-- Note Content -->
+<div class="space-y-1">
+<h2 class="text-[13px] font-bold text-[#232320] leading-snug tracking-tight">
+                *URGENT JOB OPENING - SUPPORT ENGINEER*
+              </h2>
+</div>
+<!-- Card Timestamp -->
+<footer class="mt-3 pt-1">
+<time class="text-[11px] font-normal text-[#8A8B85]" datetime="20:24">8:24 pm</time>
+</footer>
+</article>
+<!-- Card 2: Link & Gibberish Note -->
+<article class="bg-[#FFFBF0] rounded-2xl p-3.5 border border-[#F3ECE0] shadow-soft-card flex flex-col justify-between hover:border-[#E8DFD1] transition-all cursor-pointer" data-purpose="note-card-link-snippet">
+<div class="space-y-1.5 break-words">
+<p class="text-[12.5px] text-[#292A26] leading-relaxed font-normal">
+                Hejwuehehehehehege<br>
+                beghttps://youtube<br>
+                .com/shorts/X<br>
+                _iqUWjaKkY?si=<br>
+                ryAx504NSMH6yt5J<br>
+                www.godaddy.com
+              </p>
+</div>
+<!-- Card Timestamp -->
+<footer class="mt-4 pt-1">
+<time class="text-[11px] font-normal text-[#8A8B85]" datetime="19:58">7:58 pm</time>
+</footer>
+</article>
+</div>
+<!-- Right Column -->
+<div class="flex flex-col gap-3">
+<!-- Card 3: Gfff Note -->
+<article class="bg-[#FFFBF0] rounded-2xl p-3.5 border border-[#F3ECE0] shadow-soft-card min-h-[96px] flex flex-col justify-between hover:border-[#E8DFD1] transition-all cursor-pointer" data-purpose="note-card-gfff">
+<h2 class="text-[13.5px] font-medium text-[#232320]">
+              Gfff
+            </h2>
+<footer class="mt-3">
+<time class="text-[11px] font-normal text-[#8A8B85]" datetime="20:01">8:01 pm</time>
+</footer>
+</article>
+<!-- Card 4: Daily Journal Note -->
+<article class="bg-[#FFFBF0] rounded-2xl p-3.5 border border-[#F3ECE0] shadow-soft-card flex flex-col justify-between hover:border-[#E8DFD1] transition-all cursor-pointer" data-purpose="note-card-daily-journal">
+<div class="space-y-3">
+<!-- Journal Header -->
+<h2 class="text-[13.5px] font-bold text-[#1C1C1A] flex items-center gap-1 leading-snug">
+<span class="">b</span>
+<span class="">🌤️</span>
+<span class="">Daily Journal</span>
+</h2>
+<!-- Highlight Section -->
+<div class="space-y-0.5">
+<p class="text-[12px] font-medium text-[#2A2B26] flex items-center gap-1.5">
+<span class="">✨</span>
+<span class="">Today's Highlight</span>
+</p>
+</div>
+<!-- Mood Section -->
+<div class="space-y-0.5 pt-1">
+<p class="text-[12px] font-medium text-[#2A2B26] flex items-center gap-1.5">
+<span class="">😊</span>
+<span class="">How I Feel</span>
+</p>
+</div>
+</div>
+<!-- Card Timestamp -->
+<footer class="mt-4 pt-1">
+<time class="text-[11px] font-normal text-[#8A8B85]" datetime="19:58">7:58 pm</time>
+</footer>
+</article>
+<!-- Card 5: Heiehe Note -->
+<article class="bg-[#FFFBF0] rounded-2xl p-3.5 border border-[#F3ECE0] shadow-soft-card min-h-[94px] flex flex-col justify-between hover:border-[#E8DFD1] transition-all cursor-pointer" data-purpose="note-card-heiehe">
+<h2 class="text-[13px] font-medium text-[#232320]">
+              Heiehe
+            </h2>
+<footer class="mt-3">
+<time class="text-[11px] font-normal text-[#8A8B85]" datetime="19:58">7:58 pm</time>
+</footer>
+</article>
+</div>
+</div>
+</main>
+<!-- END: NotesMasonryGrid -->
+<!-- BEGIN: FloatingActionButton -->
+<div class="fixed bottom-20 right-5 z-30" data-purpose="fab-container">
+<button aria-label="Create new note" class="w-14 h-14 rounded-full bg-gradient-to-tr from-[#0091FF] to-[#38BDF8] text-white flex items-center justify-center shadow-fab-glow active:scale-95 transition-transform duration-150" type="button">
+<svg class="w-7 h-7 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" viewBox="0 0 24 24">
+<line x1="12" x2="12" y1="5" y2="19"></line>
+<line x1="5" x2="19" y1="12" y2="12"></line>
+</svg>
+</button>
+</div>
+<!-- END: FloatingActionButton -->
+<!-- BEGIN: BottomTradingWidgetBanner -->
+<footer class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-20 bg-black/95 text-white border-t border-neutral-800" data-purpose="bottom-sponsored-widget">
+
+<!-- Android / iOS Soft Navigation Bar Bar -->
+
+</footer>
+<!-- END: BottomTradingWidgetBanner -->
+</div>
+
+
+
+
+</body></html>

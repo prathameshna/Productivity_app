@@ -8,6 +8,10 @@ version = "1.0.0"
 
 android {
   namespace "expo.modules.focusblocker"
+
+  defaultConfig {
+    versionName "1.0.0"
+  }
 }
 
 dependencies {

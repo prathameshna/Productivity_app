@@ -25,8 +25,8 @@ const initialNotes: Note[] = [
   { id: 'sample-heiehe', title: 'Heiehe', content: '', category: 'Work', color: 'parchment', createdAt: '2026-10-17T14:28:00.000Z', updatedAt: '2026-10-17T14:28:00.000Z' },
 ];
 
-let notes: Note[] = [];
-let storageStatus: NotesStorageStatus = 'loading';
+let notes: Note[] = initialNotes.map((note) => ({ ...note }));
+let storageStatus: NotesStorageStatus = 'ready';
 let storageError: string | null = null;
 const notesListeners = new Set<() => void>();
 const statusListeners = new Set<() => void>();

@@ -16,7 +16,7 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import Svg, { Line, Path, Polyline } from 'react-native-svg';
+import Svg, { Line, Polyline } from 'react-native-svg';
 import { radii, spacing } from '@/theme/tokens';
 import { useAlarm, updateAlarm } from './alarmState';
 import {
@@ -47,14 +47,6 @@ function BackArrow() {
     >
       <Line x1="19" y1="12" x2="5" y2="12" />
       <Polyline points="12 19 5 12 12 5" />
-    </Svg>
-  );
-}
-
-function FlameIcon({ color }: { color: string }) {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill={color} stroke="none">
-      <Path d="M12 2c-.6 1.8-2 3.8-3.4 5.3C6.7 9.4 5 12 5 15c0 3.9 3.1 7 7 7s7-3.1 7-7c0-4.2-3.3-7.5-5.3-9.9C13 4.2 12.3 3 12 2zm.5 16.5c-2.2 0-4-1.8-4-4 0-1.5 1-2.9 2-4 .5 1.2 1.3 2 2.5 2.5.8.3 1.5 1 1.5 2 0 1.9-1.3 3.5-2 3.5z" />
     </Svg>
   );
 }
@@ -257,16 +249,6 @@ export default function MemoryMissionScreen() {
 
             {/* Example Preview Hero Card */}
             <View style={styles.heroCard}>
-              {/* Streak / Flames Pill (3 lit, 2 muted as in reference UI) */}
-              <View style={styles.flamePill}>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <FlameIcon
-                    key={i}
-                    color={i < 3 ? '#EE5D32' : '#DBD9D3'}
-                  />
-                ))}
-              </View>
-
               {/* Subtitle */}
               <Text style={styles.cardSubtitle}>EXAMPLE</Text>
 
@@ -481,15 +463,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 16,
     elevation: 2,
-  },
-  flamePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F4F3EF',
-    borderRadius: radii.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    gap: 6,
   },
   cardSubtitle: {
     fontSize: 11,

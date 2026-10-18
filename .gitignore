@@ -39,3 +39,14 @@ yarn-error.log*
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Android & Gradle build artifacts
+.gradle/
+build/
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
+**/android/app/.cxx/
+**/android/.kotlin/
+mobile-app/android/
+mobile-app/ios/

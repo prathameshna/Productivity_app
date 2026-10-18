@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
 import {
   useFonts,
   Inter_400Regular,
@@ -264,12 +266,38 @@ export default function SoundScreen() {
   const [activeTab, setActiveTab] = useState<'ringtones' | 'mymusic'>('ringtones');
   const [activeMood, setActiveMood] = useState<string>('energetic');
   const [selectedSound, setSelectedSound] = useState<string>(initial.sound);
+  const [customSoundUri, setCustomSoundUri] = useState<string | undefined>(
+    initial.customSoundUri,
+  );
   const [gradualVolume, setGradualVolume] = useState(true);
   const [volume, setVolume] = useState(20);
 
   const handleSelectSound = useCallback((name: string) => {
     setSelectedSound(name);
+    setCustomSoundUri(undefined);
     updateAlarm({ sound: name });
+  }, []);
+
+  const handleAddAudioFile = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'audio/*',
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+
+      if (result.canceled || !result.assets[0]) return;
+
+      const audioFile = result.assets[0];
+      setSelectedSound(audioFile.name);
+      setCustomSoundUri(audioFile.uri);
+      updateAlarm({
+        sound: audioFile.name,
+        customSoundUri: audioFile.uri,
+      });
+    } catch {
+      Alert.alert('Unable to add audio', 'Please try selecting the file again.');
+    }
   }, []);
 
   if (!fontsLoaded) return null;
@@ -335,71 +363,90 @@ export default function SoundScreen() {
           </Pressable>
         </View>
 
-        {/* Mood Filter Chips (horizontally scrollable) */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.chipsRow}
-        >
-          {MOOD_CHIPS.map((chip) => {
-            const active = chip.id === activeMood;
-            return (
-              <Pressable
-                key={chip.id}
-                onPress={() => setActiveMood(chip.id)}
-                style={({ pressed }) => [
-                  s.chip,
-                  active ? s.chipActive : s.chipInactive,
-                  pressed && !active && s.pressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-              >
-                <ChipIcon icon={chip.icon} active={active} />
-                <Text style={[s.chipLabel, active && s.chipLabelActive]}>
-                  {chip.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        {activeTab === 'ringtones' ? (
+          <>
+            {/* Mood Filter Chips (horizontally scrollable) */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.chipsRow}
+            >
+              {MOOD_CHIPS.map((chip) => {
+                const active = chip.id === activeMood;
+                return (
+                  <Pressable
+                    key={chip.id}
+                    onPress={() => setActiveMood(chip.id)}
+                    style={({ pressed }) => [
+                      s.chip,
+                      active ? s.chipActive : s.chipInactive,
+                      pressed && !active && s.pressed,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                  >
+                    <ChipIcon icon={chip.icon} active={active} />
+                    <Text style={[s.chipLabel, active && s.chipLabelActive]}>
+                      {chip.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
 
-        {/* Random button */}
-        <Pressable
-          style={({ pressed }) => [s.randomBtn, pressed && s.randomBtnPressed]}
-          accessibilityLabel="Random (Energetic)"
-        >
-          <ShuffleIcon />
-          <Text style={s.randomBtnLabel}>Random (Energetic)</Text>
-        </Pressable>
+            <Pressable
+              style={({ pressed }) => [s.randomBtn, pressed && s.randomBtnPressed]}
+              accessibilityLabel="Random (Energetic)"
+            >
+              <ShuffleIcon />
+              <Text style={s.randomBtnLabel}>Random (Energetic)</Text>
+            </Pressable>
 
-        {/* Sound List */}
-        <View style={s.listCard}>
-          {SOUND_LIST.map((name, index) => {
-            const selected = name === selectedSound;
-            const isLast = index === SOUND_LIST.length - 1;
-            return (
-              <View key={name}>
-                <Pressable
-                  onPress={() => handleSelectSound(name)}
-                  style={({ pressed }) => [
-                    s.listItem,
-                    pressed && s.listItemPressed,
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: selected }}
-                  accessibilityLabel={`${name}${selected ? ', selected' : ''}`}
-                >
-                  <Text style={[s.listItemLabel, selected && s.listItemLabelActive]}>
-                    {name}
-                  </Text>
-                  {selected && <CheckIcon />}
-                </Pressable>
-                {!isLast && <View style={s.divider} />}
-              </View>
-            );
-          })}
-        </View>
+            <View style={s.listCard}>
+              {SOUND_LIST.map((name, index) => {
+                const selected = name === selectedSound && !customSoundUri;
+                const isLast = index === SOUND_LIST.length - 1;
+                return (
+                  <View key={name}>
+                    <Pressable
+                      onPress={() => handleSelectSound(name)}
+                      style={({ pressed }) => [
+                        s.listItem,
+                        pressed && s.listItemPressed,
+                      ]}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: selected }}
+                      accessibilityLabel={`${name}${selected ? ', selected' : ''}`}
+                    >
+                      <Text style={[s.listItemLabel, selected && s.listItemLabelActive]}>
+                        {name}
+                      </Text>
+                      {selected && <CheckIcon />}
+                    </Pressable>
+                    {!isLast && <View style={s.divider} />}
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        ) : (
+          <View style={s.myMusicCard}>
+            <Pressable
+              onPress={handleAddAudioFile}
+              style={({ pressed }) => [s.addAudioButton, pressed && s.addAudioButtonPressed]}
+              accessibilityRole="button"
+              accessibilityLabel="Add audio file"
+            >
+              <MusicIcon color={BRAND} />
+              <Text style={s.addAudioButtonLabel}>Add audio file</Text>
+            </Pressable>
+            {customSoundUri && (
+              <Text style={s.selectedFileLabel} numberOfLines={1}>
+                {selectedSound}
+              </Text>
+            )}
+          </View>
+        )}
       </ScrollView>
 
       {/* Bottom Volume Panel */}
@@ -627,6 +674,43 @@ const s = StyleSheet.create({
   listItemLabelActive: {
     fontFamily: 'Inter_600SemiBold',
     color: BRAND,
+  },
+  myMusicCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+    shadowColor: '#171715',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  addAudioButton: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: BRAND,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  addAudioButtonPressed: {
+    backgroundColor: BRAND_SELECTED_BG,
+  },
+  addAudioButtonLabel: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 15,
+    color: BRAND,
+  },
+  selectedFileLabel: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    color: colors.secondary,
+    textAlign: 'center',
   },
   divider: {
     height: 1,

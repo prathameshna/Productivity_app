@@ -10,6 +10,7 @@ export interface AlarmData {
   name: string;
   mission: string;
   sound: string;
+  customSoundUri?: string;
   vibration: string;
   snooze: string;
   // Memory mission configuration (optional so alarms persisted before

@@ -1,0 +1,208 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Serene Note Editor</title>
+<!-- Google Font: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 with forms & container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            serene: {
+              bg: '#FAF9F6',
+              surface: '#FFFFFF',
+              hairline: '#ECEAE4',
+              primary: '#171715',
+              secondary: '#73726E',
+              placeholder: '#9E9D97',
+              accent: '#2563EB',
+              badge: '#EA4335'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="base-styling">
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #FAF9F6;
+      color: #171715;
+    }
+
+    /* iOS safe-area handling */
+    .safe-top {
+      padding-top: max(env(safe-area-inset-top), 1rem);
+    }
+    .safe-bottom {
+      padding-bottom: max(env(safe-area-inset-bottom), 1.25rem);
+    }
+
+    /* Subtle cursor blink simulation */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .caret-blink {
+      animation: blink 1.1s infinite cubic-bezier(0.65, 0.05, 0.36, 1);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between select-none bg-[#FAF9F6]">
+<!-- BEGIN: MainContainer -->
+<div class="w-full max-w-md mx-auto min-h-screen flex flex-col justify-between relative shadow-sm" data-purpose="mobile-viewport">
+<!-- BEGIN: TopSection -->
+<div class="flex-1 flex flex-col">
+<!-- BEGIN: TopAppBar -->
+<header class="safe-top px-5 pt-3 pb-2 flex items-center justify-between" data-purpose="top-navigation">
+<!-- Save / Done Icon -->
+<button aria-label="Done" class="p-1 -ml-1 text-serene-primary active:opacity-60 transition-opacity" type="button">
+<svg class="w-7 h-7 stroke-[2.2] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<polyline points="20 6 9 17 4 12"></polyline>
+</svg>
+</button>
+<!-- Action Items (Undo, Redo, Share, Menu) -->
+<div class="flex items-center space-x-5 text-serene-primary">
+<!-- Undo -->
+<button aria-label="Undo" class="p-1 active:opacity-60 transition-opacity" type="button">
+<svg class="w-6 h-6 stroke-[2] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<path d="M9 14 4 9l5-5"></path>
+<path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"></path>
+</svg>
+</button>
+<!-- Redo -->
+<button aria-label="Redo" class="p-1 active:opacity-60 transition-opacity" type="button">
+<svg class="w-6 h-6 stroke-[2] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<path d="m15 14 5-5-5-5"></path>
+<path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"></path>
+</svg>
+</button>
+<!-- Share / Export -->
+<button aria-label="Share" class="p-1 active:opacity-60 transition-opacity" type="button">
+<svg class="w-6 h-6 stroke-[2] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"></path>
+<polyline points="16 6 12 2 8 6"></polyline>
+<line x1="12" x2="12" y1="2" y2="15"></line>
+</svg>
+</button>
+<!-- More options with red indicator -->
+<button aria-label="More Options" class="p-1 -mr-1 relative active:opacity-60 transition-opacity" type="button">
+<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+<circle cx="12" cy="5" r="1.75"></circle>
+<circle cx="12" cy="12" r="1.75"></circle>
+<circle cx="12" cy="19" r="1.75"></circle>
+</svg>
+<!-- Red notification dot -->
+<span class="absolute top-0.5 right-0.5 w-2 h-2 bg-[#EA4335] rounded-full ring-2 ring-[#FAF9F6]"></span>
+</button>
+</div>
+</header>
+<!-- END: TopAppBar -->
+<!-- BEGIN: MetadataRow -->
+<section class="px-5 pt-3 pb-4 flex items-center justify-between text-[14.5px] font-medium" data-purpose="note-metadata">
+<!-- Timestamp -->
+<span class="text-[#73726E] tracking-tight">Today, 8:35 pm</span>
+<!-- Category Dropdown Trigger -->
+<button class="inline-flex items-center space-x-1.5 text-serene-primary active:opacity-70 transition-opacity" type="button">
+<!-- Notebook / Category Icon -->
+
+
+<!-- Chevron Down Icon -->
+
+</button>
+</section>
+<!-- END: MetadataRow -->
+<!-- BEGIN: EditorCanvas -->
+<main class="px-5 flex-1 flex flex-col" data-purpose="editor-body">
+<!-- Note Title Area -->
+<h1 class="text-[28px] font-bold text-[#A8A7A1] tracking-tight leading-tight select-text mb-3">
+          Title
+        </h1>
+<!-- Note Body & Template Suggestion Prompt -->
+<div class="flex items-start text-[18px] text-[#A8A7A1] leading-relaxed select-text mt-0.5 font-normal tracking-tight">
+<!-- Active Blue Cursor Indicator -->
+<span class="inline-block w-[2.2px] h-[22px] bg-[#2563EB] mr-1.5 self-center rounded-full caret-blink"></span>
+<p class="inline">
+            Note here or 
+            <button class="underline underline-offset-4 text-[#A8A7A1] hover:text-[#73726E] transition-colors focus:outline-none" type="button">select from Templates</button>
+</p>
+</div>
+</main>
+<!-- END: EditorCanvas -->
+</div>
+<!-- END: TopSection -->
+<!-- BEGIN: BottomToolbar -->
+<footer class="safe-bottom px-3 pb-3 pt-2" data-purpose="floating-toolbar-wrapper">
+<nav aria-label="Editor Formatting Toolbar" class="w-full bg-[#FFFFFF] border border-[#ECEAE4] rounded-[22px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] py-2.5 px-4 flex items-center justify-between text-[#171715]">
+<!-- Aa (Typography / Formatting) -->
+<button aria-label="Text Formatting" class="p-2 flex items-center justify-center font-bold text-[19px] leading-none active:scale-95 transition-transform" type="button">
+          Aa
+        </button>
+<!-- Checklist Icon -->
+<button aria-label="Insert Checklist" class="p-2 flex items-center justify-center active:scale-95 transition-transform" type="button">
+<svg class="w-[23px] h-[23px] stroke-[1.9] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<rect height="18" rx="5" width="18" x="3" y="3"></rect>
+<path d="m8.5 12 2.5 2.5 4.5-5"></path>
+</svg>
+</button>
+<!-- Voice Memo / Microphone Icon -->
+<button aria-label="Voice Memo" class="p-2 flex items-center justify-center active:scale-95 transition-transform" type="button">
+<svg class="w-[23px] h-[23px] stroke-[1.9] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+<path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+<line x1="12" x2="12" y1="19" y2="22"></line>
+</svg>
+</button>
+<!-- Pen / Doodle Icon -->
+<button aria-label="Draw or Sketch" class="p-2 flex items-center justify-center active:scale-95 transition-transform" type="button">
+<svg class="w-[23px] h-[23px] stroke-[1.9] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+<path d="m15 5 4 4"></path>
+</svg>
+</button>
+<!-- Image Add Icon -->
+<button aria-label="Add Image" class="p-2 flex items-center justify-center active:scale-95 transition-transform" type="button">
+<svg class="w-[23px] h-[23px] stroke-[1.9] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<rect height="16" rx="4" width="16" x="2" y="2"></rect>
+<circle cx="8" cy="8" r="1.5"></circle>
+<path d="m18 13-3.5-3.5-6.5 6.5"></path>
+<path d="M18 18h4"></path>
+<path d="M20 16v4"></path>
+</svg>
+</button>
+<!-- Emoji Icon -->
+<button aria-label="Insert Emoji" class="p-2 flex items-center justify-center active:scale-95 transition-transform" type="button">
+<svg class="w-[23px] h-[23px] stroke-[1.9] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+<line x1="9" x2="9.01" y1="9" y2="9"></line>
+<line x1="15" x2="15.01" y1="9" y2="9"></line>
+</svg>
+</button>
+<!-- Background / Texture Icon -->
+<button aria-label="Background Styles" class="p-2 flex items-center justify-center active:scale-95 transition-transform" type="button">
+<svg class="w-[23px] h-[23px] stroke-[1.9] stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+<rect height="18" rx="4" width="18" x="3" y="3"></rect>
+<line x1="7" x2="17" y1="17" y2="7"></line>
+<line x1="12" x2="17" y1="17" y2="12"></line>
+<line x1="7" x2="12" y1="12" y2="7"></line>
+</svg>
+</button>
+</nav>
+</footer>
+<!-- END: BottomToolbar -->
+</div>
+<!-- END: MainContainer -->
+
+
+</body></html>

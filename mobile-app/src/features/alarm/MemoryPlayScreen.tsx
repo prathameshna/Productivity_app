@@ -23,6 +23,7 @@ import { colors, radii, spacing } from '@/theme/tokens';
 import { getAlarm } from './alarmState';
 import {
   MEMORY_ACCENT,
+  MEMORY_AMBER,
   MEMORY_ERROR,
   MEMORY_FLAME,
   MEMORY_FLAME_MUTED,
@@ -60,7 +61,7 @@ type TileVisualState = 'idle' | 'lit' | 'selected' | 'wrong';
 interface GameState {
   phase: GamePhase;
   round: number; // 1-based current question index
-  pattern: number[]; // Target lit pattern (persists across retries of this round)
+  pattern: number[]; // Target lit pattern
   selected: number[]; // Current user selections
   wasInterruptedInPreview: boolean;
 }
@@ -73,7 +74,7 @@ type GameAction =
   | { type: 'CHECK_ANSWER' }
   | { type: 'CORRECT_ANSWER' }
   | { type: 'WRONG_ANSWER' }
-  | { type: 'RETRY_RECALL' }
+  | { type: 'RETRY_WITH_NEW_PATTERN'; pattern: number[] }
   | { type: 'COMPLETE_GAME' }
   | { type: 'APP_BACKGROUNDED' }
   | { type: 'APP_FOREGROUNDED' };
@@ -136,12 +137,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         phase: 'wrong-reveal',
       };
 
-    case 'RETRY_RECALL':
-      // Return to recall with clean selection, preserving the same pattern
+    case 'RETRY_WITH_NEW_PATTERN':
+      // Start a brand new sequence for preview and recall, resetting selections
       return {
         ...state,
-        phase: 'recall',
+        phase: 'preview',
+        pattern: action.pattern,
         selected: [],
+        wasInterruptedInPreview: false,
       };
 
     case 'COMPLETE_GAME':
@@ -246,8 +249,8 @@ function CrossIcon() {
 // ---------------------------------------------------------------------------
 const TILE_FILL: Record<TileVisualState, string> = {
   idle: MEMORY_TILE_IDLE,
-  lit: MEMORY_ACCENT,
-  selected: MEMORY_ACCENT,
+  lit: MEMORY_AMBER,
+  selected: MEMORY_AMBER,
   wrong: MEMORY_ERROR,
 };
 
@@ -271,11 +274,15 @@ function GridTile({
   const row = Math.floor(index / gridDim) + 1;
   const column = (index % gridDim) + 1;
 
+  let stateDescription: string | undefined;
+  if (state === 'lit') stateDescription = 'correct pattern (amber)';
+  else if (state === 'wrong') stateDescription = 'wrong pick (red)';
+
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Tile row ${row}, column ${column}`}
-      accessibilityState={{ selected: state === 'selected', disabled: !enabled }}
+      accessibilityLabel={`Tile row ${row}, column ${column}${stateDescription ? `, ${stateDescription}` : ''}`}
+      accessibilityState={{ selected: state === 'selected' || state === 'lit', disabled: !enabled }}
       disabled={!enabled}
       onPress={() => onToggle(index)}
       style={({ pressed }) => [
@@ -356,9 +363,10 @@ export default function MemoryPlayScreen() {
         dispatch({ type: 'START_RECALL' });
       }, config.previewDurationMs);
     } else if (state.phase === 'wrong-reveal') {
-      timerRef.current = setTimeout(() => {
-        dispatch({ type: 'RETRY_RECALL' });
-      }, config.wrongRevealDurationMs);
+      // Intentionally do NOT auto-transition away:
+      // The user remains in wrong-reveal to study the correct pattern (amber)
+      // alongside their wrong picks (red). Upon tapping 'Try again', a brand new
+      // random sequence is generated to memorize and solve.
     } else if (state.phase === 'correct') {
       timerRef.current = setTimeout(() => {
         if (state.round >= settings.questions) {
@@ -379,7 +387,6 @@ export default function MemoryPlayScreen() {
     state.phase,
     state.round,
     config.previewDurationMs,
-    config.wrongRevealDurationMs,
     settings.questions,
     settings.difficulty,
     clearActiveTimer,
@@ -458,6 +465,13 @@ export default function MemoryPlayScreen() {
     }
   }, [state.phase, state.selected.length, config.litCount, handleCheckAnswer]);
 
+  // Try again: generates a brand new random sequence to memorize and solve
+  const handleTryAgain = useCallback(() => {
+    clearActiveTimer();
+    const newPattern = generatePattern(settings.difficulty, state.pattern);
+    dispatch({ type: 'RETRY_WITH_NEW_PATTERN', pattern: newPattern });
+  }, [clearActiveTimer, settings.difficulty, state.pattern]);
+
   // Stop review: ends review and exits mission without marking complete
   const handleStopReview = useCallback(() => {
     clearActiveTimer();
@@ -531,7 +545,7 @@ export default function MemoryPlayScreen() {
               ? 'You cleared every question.'
               : `Question ${state.round} of ${settings.questions} cleared.`
             : state.phase === 'wrong-reveal'
-              ? 'Amber tiles were the pattern; red tiles were wrong picks.'
+              ? 'Amber tiles show the correct pattern; red tiles are your wrong picks.'
               : `You completed ${settings.questions} questions on ${settings.difficulty}.`;
 
   const statusColor =
@@ -660,14 +674,11 @@ export default function MemoryPlayScreen() {
                 <Text style={styles.stopReviewButtonText}>Stop review</Text>
               </Pressable>
 
-              {/* Try again button: immediately returns to recall with same pattern */}
+              {/* Try again button: generates a new random pattern for them to memorize and solve */}
               <Pressable
                 accessibilityLabel="Try again"
                 accessibilityRole="button"
-                onPress={() => {
-                  clearActiveTimer();
-                  dispatch({ type: 'RETRY_RECALL' });
-                }}
+                onPress={handleTryAgain}
                 style={({ pressed }) => [
                   styles.tryAgainButton,
                   pressed && styles.primaryButtonPressed,

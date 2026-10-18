@@ -19,6 +19,7 @@ export const DEFAULT_MEMORY_DIFFICULTY: MemoryDifficulty = 'Normal';
 
 // Feature colors taken from the Memory Mission reference UI.
 export const MEMORY_ACCENT = '#F3B328';
+export const MEMORY_AMBER = '#F3B328'; // Warm amber for target pattern display
 export const MEMORY_TILE_IDLE = '#E4E2DC';
 export const MEMORY_FLAME = '#EE5D32';
 export const MEMORY_FLAME_MUTED = '#D6D3CD';
@@ -129,16 +130,28 @@ export function nextDifficulty(
 }
 
 // Generate unique pattern for a difficulty without duplicate indices.
-export function generatePattern(difficulty: MemoryDifficulty): number[] {
+// Optionally pass excludePattern to guarantee generating a different pattern on retry.
+export function generatePattern(
+  difficulty: MemoryDifficulty,
+  excludePattern?: number[],
+): number[] {
   const config = getDifficultyConfig(difficulty);
   const indexes = Array.from({ length: config.totalTiles }, (_, i) => i);
 
-  // Fisher-Yates shuffle
-  for (let i = indexes.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = indexes[i];
-    indexes[i] = indexes[j];
-    indexes[j] = temp;
+  const maxAttempts = excludePattern ? 15 : 1;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    // Fisher-Yates shuffle
+    for (let i = indexes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = indexes[i];
+      indexes[i] = indexes[j];
+      indexes[j] = temp;
+    }
+
+    const candidate = indexes.slice(0, config.litCount);
+    if (!excludePattern || !areTileSetsEqual(candidate, excludePattern)) {
+      return candidate;
+    }
   }
 
   return indexes.slice(0, config.litCount);
